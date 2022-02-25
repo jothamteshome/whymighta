@@ -1,5 +1,6 @@
 import discord
 import PropertiesReader
+import praw
 
 from aiohttp import ClientSession
 from datetime import date
@@ -28,7 +29,7 @@ today = date.today()
 @discordClient.event
 async def on_ready():
     print("Logged in as {0.user}".format(discordClient))
-    await weather()
+    await on_reddit()
 
 
 # Weather function that takes in a city and unit type and returns the temperature
@@ -105,7 +106,15 @@ async def weather(city="East Lansing", state="", country="", units="imperial"):
 
 @discordClient.event
 async def on_reddit():
-    pass
+    user = prop_reader.get('REDDIT_USERNAME')
+    password = prop_reader.get('REDDIT_PASSWORD')
+    app_id = prop_reader.get('REDDIT_APP_ID')
+    secret = prop_reader.get('REDDIT_APP_SECRET')
+    user_agent = 'OhYa Bot by u/' + user
+    reddit = praw.Reddit(client_id=app_id, client_secret=secret,
+                         user_agent=user_agent, username=user, password=password)
+
+    reddit.read_only = True
 
 
 @discordClient.event
