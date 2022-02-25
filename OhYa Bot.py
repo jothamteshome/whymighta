@@ -1,10 +1,10 @@
 import discord
 import PropertiesReader
-import requests
-import praw
+import asyncpraw
+import asyncprawcore
 
 from aiohttp import ClientSession
-from datetime import date
+from datetime import datetime
 
 # Initialize reader for properties file
 prop_reader = PropertiesReader.PropertiesReader()
@@ -24,14 +24,12 @@ intents.typing = True
 discordClient = discord.Client(intents=intents)
 
 # Get the date on start-up
-today = date.today()
+today = datetime.now()
 
 
 @discordClient.event
 async def on_ready():
     print("Logged in as {0.user}".format(discordClient))
-    # await weather()
-    await on_reddit()
 
 
 # Weather function that takes in a city and unit type and returns the temperature
@@ -50,7 +48,8 @@ async def weather(city="East Lansing", state="", country="", units="imperial"):
     # Weather conditions
     weather_conditions = {'thunderstorm': "It is storming right now.", 'drizzle': "It is drizzling right now",
                           'rain': "It is raining right now.", 'snow': "It is snowing right now.",
-                          'clear': "It is clear outside right now.", 'clouds': "It is cloudy right now."}
+                          'clear': "It is clear outside right now.", 'clouds': "It is cloudy right now.",
+                          'mist': "It is misty outside right now."}
 
     # Opens url to OpenWeatherMap API using aiohttp
     async with ClientSession(trust_env=True) as session:
@@ -107,89 +106,104 @@ async def weather(city="East Lansing", state="", country="", units="imperial"):
 
 
 @discordClient.event
-async def on_reddit(subreddit='itswiggles_', sort_by='hot', top_sort=''):
-    # Load reddit credentials
+async def on_reddit(sub='itswiggles_', sort_by='hot', top_sort='', num_posts=5):
+
+    sub, sort_by, top_sort = 'itswiggles_', 'top', 'all'
+    # Get Discord channel
+    channel_id = prop_reader.get('DISCORD_CHANNEL')
+    channel = await discordClient.fetch_channel(channel_id)
+
+    # Login to Reddit with asyncpraw
     user = prop_reader.get('REDDIT_USERNAME')
     password = prop_reader.get('REDDIT_PASSWORD')
     app_id = prop_reader.get('REDDIT_APP_ID')
     secret = prop_reader.get('REDDIT_APP_SECRET')
+    user_agent = 'OhYa Bot by u/' + user
+    reddit = asyncpraw.Reddit(client_id=app_id, client_secret=secret,
+                              user_agent=user_agent, username=user, password=password)
 
-    # Discord channel key
-    channel_key = prop_reader.get('DISCORD_CHANNEL')
-    channel = await discordClient.fetch_channel(channel_key)
+    reddit.read_only = True
 
-    # Login with credentials
-    auth = requests.auth.HTTPBasicAuth(app_id, secret)
-    data = {'grant_type': 'password', 'username': user, 'password': password}
+    reddit_web = "https://reddit.com"
 
-    headers = {'user-agent': 'OhYa Bot by ' + user}
+    # Check if subreddit exists
+    try:
+        posts = []
+        # If subreddit exists, search for posts
+        subreddit = await reddit.subreddit(sub, fetch=True)
+        count = 0
 
-    res = requests.post('https://www.reddit.com/api/v1/access_token',
-                        auth=auth, data=data, headers=headers)
+        top_posts = {'now': ("Top {num_posts} posts of the hour in r/", subreddit.top('hour', limit=num_posts + 2)),
+                     'day': ("Top {num_posts} posts of the day in r/", subreddit.top('day', limit=num_posts + 2)),
+                     'week': ("Top {num_posts} posts of the week in r/", subreddit.top('week', limit=num_posts + 2)),
+                     'month': ("Top {num_posts} posts of the month in r/", subreddit.top('month', limit=num_posts + 2)),
+                     'year': ("Top {num_posts} posts of the year in r/", subreddit.top('year', limit=num_posts + 2)),
+                     'all': ("Top {num_posts} posts of all time in r/", subreddit.top('all', limit=num_posts + 2))
+                     }
+        embed_string = None
 
-    reddit_token = res.json()['access_token']
-    headers['Authorization'] = 'bearer {}'.format(reddit_token)
+        if sort_by == 'hot':
+            embed_string = "Top {num_posts} hottest posts in r/".format(num_posts=num_posts)
+            submissions = subreddit.hot(limit=num_posts + 2)
+        elif sort_by == 'rising':
+            embed_string = "Top {num_posts} rising posts in r/".format(num_posts=num_posts)
+            submissions = subreddit.rising(limit=num_posts + 2)
+        elif sort_by == 'new':
+            embed_string = "{num_posts} newest posts in r/".format(num_posts=num_posts)
+            submissions = subreddit.new(limit=num_posts + 2)
+        elif sort_by == 'top':
+            embed_string = top_posts[top_sort][0].format(num_posts=num_posts)
+            submissions = top_posts[top_sort][1]
 
-    requests.get('https://oauth.reddit.com/api/v1/me', headers=headers)
+        embed = discord.Embed(title="{embed_string}{subreddit}".format(embed_string=embed_string, subreddit=sub),
+                              description=subreddit.public_description, color=0xFF5733)
 
-    api = 'https://oauth.reddit.com'
-    reddit = 'https://reddit.com'
+        # Get the two more than the specified number of posts
+        # on a subreddit to account for the maximum of 2 stickied posts
+        async for submission in submissions:
+            post_data = {'title': '', 'selftext': '', 'author': '', 'author_img': '',
+                         'score': '', 'ratio': '', 'url': ''}
 
-    res = requests.get('{}/r/{subreddit}/{sort_by}{top_sort}'.format(api, subreddit=subreddit, sort_by=sort_by,
-                                                                     top_sort=top_sort), headers=headers,
-                       params={'limit': 5})
+            # Get first 5 non-stickied posts off of a subreddit
+            if not submission.stickied and count < num_posts:
+                count += 1
+                post_data['title'] = submission.title
+                post_data['selftext'] = submission.selftext
+                try:
+                    post_data['author'] = submission.author.name
+                    author = await reddit.redditor(submission.author.name, fetch=True)
+                    post_data['author_img'] = author.icon_img
+                except AttributeError:
+                    post_data['author'] = '[deleted]'
+                    post_data['author_img'] = 'https://cdn-icons-png.flaticon.com/512/1384/1384067.png'
+                post_data['score'] = submission.score
+                post_data['ratio'] = submission.upvote_ratio
+                post_data['url'] = submission.url
+                posts.append(post_data)
 
-    sub_res = requests.get('{}/r/{subreddit}/about'.format(api, subreddit=subreddit))
+        await channel.send(embed=embed)
+        for post in posts:
+            embed = discord.Embed(title=post['title'], description=post['selftext'], color=0xFF5733)
+            embed.set_author(name="u/" + post['author'], url="{}/u/{author}".format(reddit_web, author=post['author']),
+                             icon_url=post['author_img'])
+            if "youtube.com" in post['url']:
+                embed.add_field(name="᲼᲼", value=post['url'])
+                video_id = post['url'].split("v=")[1]
+                video_id = video_id[0:11]
+                embed.set_image(url='https://img.youtube.com/vi/{id}/hq3.jpg'.format(id=video_id))
+            elif ".gifv" in post['url']:
+                embed.add_field(name="᲼᲼", value=post['url'], inline=False)
+            elif ".jpg" in post['url'] or ".png" in post['url'] or ".gif" in post['url']:
+                embed.set_image(url=post['url'])
+            else:
+                embed.add_field(name="᲼᲼", value=post['url'], inline=False)
+            downvotes = int(post['score']) - int(int(post['score']) * float(post['ratio']))
+            embed.set_footer(text="Upvotes: " + str(post['score']) + " "*20 + "Downvotes: " + str(downvotes))
+            await channel.send(embed=embed)
 
-    user_res = requests.get('{}/u/TheRealFroJoe'.format(api))
-
-    # print(sub_res.json())
-    # sub_description = sub_res_data['data']['public_description']
-    # if sub_res_data['data']['community_icon']:
-    #    subreddit_icon = sub_res_data['data']['community_icon']
-    # else:
-    #    subreddit_icon = sub_res_data['data']['icon_img']
-
-    posts = []
-
-    # Store data from 5 reddit posts
-    for post in res.json()['data']['children']:
-        post_data = {}
-        post_data['author'] = post['data']['author']
-        post_data['title'] = post['data']['title']
-        post_data['selftext'] = post['data']['selftext']
-        if post['data']['media_embed']:
-            url = post['data']['media_embed']['content']
-            url = url.split("src=\"")[1]
-            url = url.split("\"")[0]
-            post_data['media_embed'] = url
-        else:
-            post_data['media_embed'] = ""
-        post_data['upvotes'] = int(post['data']['ups'])
-        post_data['downvotes'] = int(post['data']['ups']) - int(
-            int(post['data']['ups'] * float(post['data']['upvote_ratio'])))
-
-        posts.append(post_data)
-
-    embed = discord.Embed(title="Top 5 Posts of All Time", color=0xFF5733)
-    embed.set_author(name="r/" + subreddit, url='{}/r/{subreddit}/{sort_by}{top_sort}'
-                     .format(reddit, subreddit=subreddit, sort_by=sort_by, top_sort=top_sort),
-                     icon_url='https://external-preview.redd.it/QJRqGgkUjhGSdu3vfpckrvg1UKzZOqX2BbglcLhjS70.png'
-                              '?auto=webp&s=c681ae9c9b5021d81b6c4e3a2830f09eff2368b5')
-    embed.add_field(name='\u200b', value='-' * 95)
-
-    for i in range(1, 6):
-        if not posts[i]['selftext'] and posts[i]['media_embed']:
-            embed.add_field(name=posts[i]['title'], value=posts[i]['media_embed'], inline=False)
-        elif posts[i]['selftext']:
-            embed.add_field(name=posts[i]['title'], value=posts[i]['selftext'], inline=False)
-        embed.add_field(name="Upvotes", value=str(posts[i]['upvotes']), inline=True)
-        embed.add_field(name="Downvotes", value=str(posts[i]['downvotes']), inline=True)
-        if i < 5:
-            embed.add_field(name="u/" + posts[i]['author'], value='-' * 95, inline=False)
-    embed.add_field(name="u/" + posts[i]['author'], value='-' * 95, inline=False)
-
-    await channel.send(embed=embed)
+    # If subreddit does not exist, notify user
+    except asyncprawcore.NotFound:
+        await channel.send("Subreddit r/{subreddit_name} doesn't exist.".format(subreddit_name=sub))
 
 
 @discordClient.event
@@ -203,13 +217,13 @@ async def on_message(message):
                                "[Country-Code*(optional)*] [Units-Type]")
         elif prefix + "weather" in message.content:
             user_message = message.content
-            user_message = user_message.replace(prefix + "weather", "")
+            user_message = user_message.replace(prefix + "weather ", "")
             user_message = user_message.split()
 
             # Remove any hyphens from locations
             for i in range(0, len(user_message)):
                 if "-" in user_message[i]:
-                    user_message[i].replace("-", " ")
+                    user_message[i] = user_message[i].replace("-", " ")
 
             # Try to use all user-inputted data points, and if they do not
             # exist, try to use less until just the default function call is sent
@@ -222,32 +236,44 @@ async def on_message(message):
                     try:
                         await weather(user_message[0], "", "", user_message[1])
                     except IndexError:
-                        if user_message[0].lower() not in ['imperial', 'metric', 'standard']:
+                        if user_message[0] not in ['imperial', 'metric', 'standard']:
                             try:
                                 await weather(user_message[0])
                             except IndexError:
                                 await weather()
                         else:
                             await weather()
-
         elif prefix + "reddit" in message.content:
             valid_sort_types = ['hot', 'new', 'top', 'rising']
-            valid_top_sorts = {'now': '/?t=hour', 'day': '/?t=day', 'week': '/?t=week',
-                               'month': '/?t=month', 'year': "/?t=year", 'all': '/?t=all'}
+            valid_top_sorts = ['now', 'day', 'week', 'month', 'year', 'all']
             user_message = message.content
             user_message = user_message.replace(prefix + "reddit", "")
             user_message = user_message.split()
             try:
+                # If input is not a valid Reddit sorting type, send valid types
                 if user_message[1].lower() not in valid_sort_types:
                     await channel.send(
                         "Not a valid sorting condition\nValid conditions are: Hot | New | Top | Rising")
+
+                # If input is valid sorting type and not 'top'
                 elif user_message[1].lower() != 'top':
-                    await on_reddit(user_message[0], user_message[1])
+                    # If user requests less than 2 or more than 10 posts use
+                    # default amount of 5, otherwise use requested amount
+                    if int(user_message[2]) < 2 or int(user_message[2]) > 10:
+                        await on_reddit(user_message[0], user_message[1])
+                    else:
+                        await on_reddit(user_message[0], user_message[1], '', user_message[2])
+
+                # If 'top' sort and not valid timespan to sort on
+                # tell user valid time conditions, otherwise send the message
                 elif user_message[1].lower() == 'top' and user_message[2].lower() not in valid_top_sorts:
                     await channel.send("Not a valid sorting condition for 'Top' posts\n"
                                        "Valid conditions are: Now | Day | Week | Month | Year | All")
                 else:
-                    await on_reddit(user_message[0], user_message[1], valid_top_sorts[user_message[2]])
+                    if int(user_message[3]) < 2 or int(user_message[3]) > 10:
+                        await on_reddit(user_message[0], user_message[1], user_message[2])
+                    else:
+                        await on_reddit(user_message[0], user_message[1], user_message[2], int(user_message[3]))
             except IndexError:
                 try:
                     if user_message[0] not in valid_top_sorts or user_message[0] not in valid_sort_types:
