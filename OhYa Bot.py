@@ -1,6 +1,7 @@
 import discord
 import PropertiesReader
-import praw
+import asyncpraw
+import asyncprawcore
 
 from aiohttp import ClientSession
 from datetime import date
@@ -105,16 +106,53 @@ async def weather(city="East Lansing", state="", country="", units="imperial"):
 
 
 @discordClient.event
-async def on_reddit():
+async def on_reddit(sub='itswiggles_', sort_by='hot', top_sort=''):
+    # Get Discord channel
+    channel_id = prop_reader.get('DISCORD_CHANNEL')
+    channel = await discordClient.fetch_channel(channel_id)
+
+    # Login to Reddit with asyncpraw
     user = prop_reader.get('REDDIT_USERNAME')
     password = prop_reader.get('REDDIT_PASSWORD')
     app_id = prop_reader.get('REDDIT_APP_ID')
     secret = prop_reader.get('REDDIT_APP_SECRET')
     user_agent = 'OhYa Bot by u/' + user
-    reddit = praw.Reddit(client_id=app_id, client_secret=secret,
-                         user_agent=user_agent, username=user, password=password)
+    reddit = asyncpraw.Reddit(client_id=app_id, client_secret=secret,
+                              user_agent=user_agent, username=user, password=password)
 
     reddit.read_only = True
+
+    # Check if subreddit exists
+    try:
+        posts = []
+        # If subreddit exists, search for posts
+        subreddit = await reddit.subreddit(sub, fetch=True)
+        count = 0
+
+        # Get the top 7 posts on a subreddit to account for the maximum of 2 stickied posts
+        async for submission in subreddit.hot(limit=7):
+            post_data = {'subreddit_desc': '', 'title': '', 'author': '', 'author_img': '',
+                         'score': '', 'ratio': '', 'url': ''}
+
+            # Get first 5 non-stickied posts off of a subreddit
+            if not submission.stickied and count < 5:
+                count += 1
+                post_data['subreddit_desc'] = subreddit.public_description
+                post_data['title'] = submission.title
+                post_data['author'] = submission.author.name
+                author = await reddit.redditor(submission.author.name, fetch=True)
+                post_data['author_img'] = author.icon_img
+                post_data['score'] = submission.score
+                post_data['ratio'] = submission.upvote_ratio
+                post_data['url'] = submission.url
+                posts.append(post_data)
+        for post in posts:
+            print(post)
+
+    # If subreddit does not exist, notify user
+    except asyncprawcore.NotFound:
+        await channel.send("Subreddit r/{subreddit_name} doesn't exist.".format(subreddit_name=sub))
+
 
 
 @discordClient.event
@@ -154,6 +192,30 @@ async def on_message(message):
                                 await weather()
                         else:
                             await weather()
+        elif prefix + "reddit" in message.content:
+            valid_sort_types = ['hot', 'new', 'top', 'rising']
+            valid_top_sorts = {'now': '/?t=hour', 'day': '/?t=day', 'week': '/?t=week',
+                               'month': '/?t=month', 'year': "/?t=year", 'all': '/?t=all'}
+            user_message = message.content
+            user_message = user_message.replace(prefix + "reddit", "")
+            user_message = user_message.split()
+            try:
+                if user_message[1].lower() not in valid_sort_types:
+                    await channel.send(
+                        "Not a valid sorting condition\nValid conditions are: Hot | New | Top | Rising")
+                elif user_message[1].lower() != 'top':
+                    await on_reddit(user_message[0], user_message[1])
+                elif user_message[1].lower() == 'top' and user_message[2].lower() not in valid_top_sorts:
+                    await channel.send("Not a valid sorting condition for 'Top' posts\n"
+                                       "Valid conditions are: Now | Day | Week | Month | Year | All")
+                else:
+                    await on_reddit(user_message[0], user_message[1], valid_top_sorts[user_message[2]])
+            except IndexError:
+                try:
+                    if user_message[0] not in valid_top_sorts or user_message[0] not in valid_sort_types:
+                        await on_reddit(user_message[0])
+                except IndexError:
+                    await on_reddit()
 
 
 discordClient.run(TOKEN)
