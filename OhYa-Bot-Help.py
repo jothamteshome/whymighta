@@ -9,7 +9,7 @@ class HelpHandler(commands.Cog):
     @commands.command(name='OhYa_help')
     async def help(self, message):
         channel = message.channel
-        embed = discord.Embed(title="OhYa Bot Help Menu", description='-' * 95, color=0x9534eb)
+        embed = discord.Embed(title=":information_source: | OhYa Bot Help Menu", description='-' * 95, color=0x9534eb)
         embed.add_field(name="Weather\n", value="**`usage`** - j!weather [city] [state-code] [country-code] ["
                                                 "unit-type]\n\n "
                                                 "`city` - Type in a city name. Use '-' in place of spaces\n\n"

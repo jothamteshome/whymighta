@@ -70,7 +70,7 @@ class RedditHandler(commands.Cog):
             # on a subreddit to account for the maximum of 2 stickied posts
             async for submission in submissions:
                 post_data = {'title': '', 'selftext': '', 'author': '', 'author_img': '',
-                             'score': '', 'ratio': '', 'url': ''}
+                             'score': '', 'ratio': '', 'url': '', 'permalink' : ''}
 
                 # Get first 5 non-stickied posts off of a subreddit
                 if not submission.stickied and count < num_posts:
@@ -87,31 +87,40 @@ class RedditHandler(commands.Cog):
                     post_data['score'] = submission.score
                     post_data['ratio'] = submission.upvote_ratio
                     post_data['url'] = submission.url
+                    post_data['permalink'] = submission.permalink
                     posts.append(post_data)
 
             await channel.send(embed=embed)
             for post in posts:
-                embed = discord.Embed(title=post['title'], description=post['selftext'], color=0xFF5733)
+
+                # Create an embed for each post containing its title and text
+                embed = discord.Embed(title=post['title'], description=post['selftext'],
+                                      color=0xFF5733, url=post['url'])
+
+                # Set the author to the creator of the reddit post and add a link to their profile
                 embed.set_author(name="u/" + post['author'],
                                  url="{}/u/{author}".format(reddit_web, author=post['author']),
                                  icon_url=post['author_img'])
                 if "youtube.com" in post['url']:
-                    embed.add_field(name="᲼᲼", value=post['url'])
+                    embed.url = post['url']
                     video_id = post['url'].split("v=")[1]
                     video_id = video_id[0:11]
                     embed.set_image(url='https://img.youtube.com/vi/{id}/hq3.jpg'.format(id=video_id))
                 elif ".gifv" in post['url']:
-                    embed.add_field(name="᲼᲼", value=post['url'], inline=False)
+                    embed.url = reddit_web + post['permalink']
                 elif ".jpg" in post['url'] or ".png" in post['url'] or ".gif" in post['url']:
                     embed.set_image(url=post['url'])
+                    embed.url = reddit_web + post['permalink']
                 else:
-                    embed.add_field(name="᲼᲼", value=post['url'], inline=False)
+                    embed.url = reddit_web + post['permalink']
                 downvotes = int(post['score']) - int(int(post['score']) * float(post['ratio']))
                 embed.set_footer(text="Upvotes: " + str(post['score']) + " " * 20 + "Downvotes: " + str(downvotes))
                 await channel.send(embed=embed)
 
         # If subreddit does not exist, notify user
         except asyncprawcore.NotFound:
+            await channel.send("Subreddit r/{subreddit_name} doesn't exist.".format(subreddit_name=sub))
+        except asyncprawcore.exceptions.Redirect:
             await channel.send("Subreddit r/{subreddit_name} doesn't exist.".format(subreddit_name=sub))
 
     @commands.command('on_reddit_message')
@@ -176,8 +185,10 @@ class RedditHandler(commands.Cog):
                         await channel.send("Last value must be an integer between 2 and 10")
                     else:
                         await self.on_reddit(user_message[0], user_message[1].lower(), 'all', int(user_message[2]))
+                elif user_message[2].lower() in valid_top_sorts:
+                    await self.on_reddit(user_message[0], user_message[1].lower(), user_message[2].lower())
                 else:
-                    await channel.send("Last value is not an integer. Please input an integer between 2 and 10")
+                    await channel.send("Please check j!help for proper use of this function")
             elif user_message[1].lower() not in valid_sort_types:
                 await channel.send(
                     "Not a valid sorting condition\nValid conditions are: Hot | New | Top | Rising")

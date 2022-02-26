@@ -1,6 +1,6 @@
 import discord
 import PropertiesReader
-import pytz
+import time
 
 from discord.ext import commands
 from datetime import datetime, timezone
@@ -32,9 +32,13 @@ async def on_ready():
 
 @commands.command(name='ping')
 async def ping(message):
-    embed = discord.Embed(title="Pong!", color=0x9534eb)
-    embed.add_field(name="Latency", value=str(round(bot.latency * 1000)) + "ms")
-    await message.channel.send(embed=embed)
+    before = time.monotonic()
+    embed = discord.Embed(title=":information_source: | Pong!", description="\n", color=0x9534eb)
+    message = await message.channel.send(embed=embed)
+    latency = (time.monotonic() - before) * 1000
+    embed.add_field(name="Latency", value=str(int(latency)) + "ms", inline=False)
+    embed.add_field(name="API", value=str(int(bot.latency * 1000)) + "ms", inline=False)
+    await message.edit(embed=embed)
 
 
 @bot.event
