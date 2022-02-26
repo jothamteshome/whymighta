@@ -1,7 +1,9 @@
 import discord
 import PropertiesReader
+import pytz
 
 from discord.ext import commands
+from datetime import datetime, timezone
 
 # Initialize reader for properties file
 prop_reader = PropertiesReader.PropertiesReader()
@@ -25,12 +27,19 @@ async def on_ready():
     bot.load_extension("OhYa-Bot-OpenWeatherMap")
     bot.load_extension("OhYa-Bot-Reddit")
     bot.load_extension("OhYa-Bot-Help")
+    bot.load_extension("OhYa-Bot-Clear")
+
+
+@commands.command(name='ping')
+async def ping(message):
+    embed = discord.Embed(title="Pong!", color=0x9534eb)
+    embed.add_field(name="Latency", value=str(round(bot.latency * 1000)) + "ms")
+    await message.channel.send(embed=embed)
 
 
 @bot.event
 async def on_message(message):
     channel = message.channel
-
     if message.author.bot is not True:
         if message.content == bot.command_prefix:
             await channel.send("Did you mean to use a function?\n Current functions: weather")
@@ -43,6 +52,11 @@ async def on_message(message):
         elif bot.command_prefix + "reddit" in message.content:
             reddit_cog = bot.get_cog('RedditHandler')
             await reddit_cog.on_reddit_message(message)
+        elif bot.command_prefix + "clear" in message.content:
+            clear_cog = bot.get_cog('ClearHandler')
+            await clear_cog.on_clear_message(message)
+        elif bot.command_prefix + "ping" in message.content:
+            await ping(message)
 
 
 bot.run(TOKEN)

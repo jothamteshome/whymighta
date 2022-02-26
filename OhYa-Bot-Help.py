@@ -17,19 +17,24 @@ class HelpHandler(commands.Cog):
                                                 "US\n\n "
                                                 "`country-code` - (Optional) Name or code of a country\n\n"
                                                 "`unit-type` - Type in units you would like to use. "
-                                                "Select from:\n| imperial | metric | standard |"
+                                                "\nSelect from: | imperial | metric | standard |"
                                                 + "\n\n" + "-" * 95, inline=False)
 
         embed.add_field(name="Reddit\n",
                         value="**`usage`** - j!reddit [subreddit] [sort_type] [top_sort] [num_posts]\n\n"
                               "`subreddit` - Enter the name of the subreddit you would like to visit\n\n"
-                              "`sort_type` - Reddit sorting condition you would like. Select from:\n | "
+                              "`sort_type` - Reddit sorting condition you would like. \nSelect from: | "
                               "Hot | New | Rising | Top |\n\n"
                               "`top_sort` - Only applies if sort type is 'Top'. Choose the timespan "
-                              "you would like to sort by. Select from:\n | Now | Day | Week | Month | "
+                              "you would like to sort by. \nSelect from: | Now | Day | Week | Month | "
                               "Year | All |\n\n"
                               "`num_posts` - Number of posts you would like to see. Select a number "
                               "including and between 2 and 10" + "\n\n" + "-" * 95, inline=False)
+
+        embed.add_field(name="Clear\n", value="**`usage`** - j!clear [num_posts]\n\n"
+                                              "`num_posts` - (Optional) Select a number of posts to delete. Defaults "
+                                              "to 5 and maximum is 100\n\n" + "-" * 95, inline=False)
+        embed.add_field(name="Ping\n", value="**`usage`** - j!ping\n\n Returns bot latency\n\n" + "-" * 95, inline=False)
 
         embed.set_footer(text="For more information and help contact ohyabotdev@gmail.com")
         await channel.send(embed=embed)
