@@ -108,7 +108,6 @@ async def weather(city="East Lansing", state="", country="", units="imperial"):
 @discordClient.event
 async def on_reddit(sub='itswiggles_', sort_by='hot', top_sort='', num_posts=5):
 
-    sub, sort_by, top_sort = 'itswiggles_', 'top', 'all'
     # Get Discord channel
     channel_id = prop_reader.get('DISCORD_CHANNEL')
     channel = await discordClient.fetch_channel(channel_id)
@@ -249,37 +248,81 @@ async def on_message(message):
             user_message = message.content
             user_message = user_message.replace(prefix + "reddit", "")
             user_message = user_message.split()
-            try:
-                # If input is not a valid Reddit sorting type, send valid types
-                if user_message[1].lower() not in valid_sort_types:
+
+            # If user input includes all 4 fields
+            if len(user_message) == 4:
+
+                # If the 'sort_by' field is valid and is not 'top'
+                # remind user to check for 'help' because third field
+                # only applies for 'top' posts
+                if user_message[1].lower() in valid_sort_types and user_message[1].lower() != "top":
+                    await channel.send("Please check j!help for proper use of this function")
+
+                # If the 'sort_by' field is valid and is 'top'
+                # check to see if 'top_sort' field is valid
+                elif user_message[1].lower() in valid_sort_types and user_message[1].lower() == "top":
+
+                    # If 'top_sort' field is valid, check if
+                    # 'num_posts' field is an integer between 2-10.
+                    # If invalid, remind user of valid top_sorts
+                    if user_message[2].lower() in valid_top_sorts:
+                        if str(user_message[3]).isnumeric():
+
+                            # If 'num_posts' not between 2-10, use default 'num_posts'
+                            # otherwise use user input
+                            if int(user_message[3]) < 2 or int(user_message[3]) > 10:
+                                await on_reddit(user_message[0], user_message[1].lower(), user_message[2].lower())
+                            else:
+                                await on_reddit(user_message[0], user_message[1].lower(),
+                                                user_message[2].lower(), int(user_message[3]))
+                        else:
+                            await channel.send("Last value is not an integer. Please input an integer between 2 and 10")
+                    else:
+                        await channel.send("Not a valid sorting condition for 'Top' posts\n"
+                                           "Valid conditions are: Now | Day | Week | Month | Year | All")
+
+                # If 'sort_by' field not valid, remind user of valid sort conditions
+                elif user_message[1].lower() not in valid_sort_types:
                     await channel.send(
                         "Not a valid sorting condition\nValid conditions are: Hot | New | Top | Rising")
-
-                # If input is valid sorting type and not 'top'
-                elif user_message[1].lower() != 'top':
-                    # If user requests less than 2 or more than 10 posts use
-                    # default amount of 5, otherwise use requested amount
-                    if int(user_message[2]) < 2 or int(user_message[2]) > 10:
-                        await on_reddit(user_message[0], user_message[1])
-                    else:
-                        await on_reddit(user_message[0], user_message[1], '', user_message[2])
-
-                # If 'top' sort and not valid timespan to sort on
-                # tell user valid time conditions, otherwise send the message
-                elif user_message[1].lower() == 'top' and user_message[2].lower() not in valid_top_sorts:
-                    await channel.send("Not a valid sorting condition for 'Top' posts\n"
-                                       "Valid conditions are: Now | Day | Week | Month | Year | All")
                 else:
-                    if int(user_message[3]) < 2 or int(user_message[3]) > 10:
-                        await on_reddit(user_message[0], user_message[1], user_message[2])
+                    await channel.send("Please check j!help for proper use of this function")
+            elif len(user_message) == 3:
+                if user_message[1].lower() in valid_sort_types and user_message[1].lower() != 'top':
+                    if str(user_message[2]).isnumeric():
+                        if int(user_message[2]) < 2 or int(user_message[2]) > 10:
+                            await on_reddit(user_message[0], user_message[1].lower())
+                        else:
+                            await on_reddit(user_message[0], user_message[1].lower(), '', int(user_message[2]))
                     else:
-                        await on_reddit(user_message[0], user_message[1], user_message[2], int(user_message[3]))
-            except IndexError:
-                try:
-                    if user_message[0] not in valid_top_sorts or user_message[0] not in valid_sort_types:
-                        await on_reddit(user_message[0])
-                except IndexError:
-                    await on_reddit()
+                        await channel.send("Last value is not an integer. Please input an integer between 2 and 10")
+                elif user_message[1].lower() in valid_sort_types and user_message[1].lower() == 'top':
+                    if str(user_message[2]).isnumeric():
+                        if int(user_message[2]) < 2 or int(user_message[2]) > 10:
+                            await on_reddit(user_message[0], user_message[1].lower(), 'all')
+                        else:
+                            await on_reddit(user_message[0], user_message[1].lower(), 'all', int(user_message[2]))
+                    else:
+                        await channel.send("Last value is not an integer. Please input an integer between 2 and 10")
+                elif user_message[1].lower() not in valid_sort_types:
+                    await channel.send(
+                        "Not a valid sorting condition\nValid conditions are: Hot | New | Top | Rising")
+                else:
+                    await channel.send("Please check j!help for proper use of this function")
+            elif len(user_message) == 2:
+                if user_message[1].lower() in valid_sort_types and user_message[1].lower() != 'top':
+                    await on_reddit(user_message[0], user_message[1].lower())
+                elif user_message[1].lower() in valid_sort_types and user_message[1].lower() == 'top':
+                    await on_reddit(user_message[0], user_message[1].lower(), 'all')
+                elif user_message[1].lower() not in valid_sort_types:
+                    await channel.send(
+                        "Not a valid sorting condition\nValid conditions are: Hot | New | Top | Rising")
+                else:
+                    await channel.send("Please check j!help for proper use of this function")
+            elif len(user_message) == 1:
+                await on_reddit(user_message[0])
+            elif len(user_message) == 0:
+                await on_reddit()
 
 
 discordClient.run(TOKEN)
