@@ -1,4 +1,3 @@
-import discord
 import PropertiesReader
 
 from discord.ext import commands

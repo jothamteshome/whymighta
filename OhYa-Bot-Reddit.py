@@ -145,7 +145,7 @@ class RedditHandler(commands.Cog):
                         # If 'num_posts' not between 2-10, use default 'num_posts'
                         # otherwise use user input
                         if int(user_message[3]) < 2 or int(user_message[3]) > 10:
-                            await self.on_reddit(user_message[0], user_message[1].lower(), user_message[2].lower())
+                            await channel.send("Last value must be an integer between 2 and 10")
                         else:
                             await self.on_reddit(user_message[0], user_message[1].lower(),
                                                  user_message[2].lower(), int(user_message[3]))
@@ -165,7 +165,7 @@ class RedditHandler(commands.Cog):
             if user_message[1].lower() in valid_sort_types and user_message[1].lower() != 'top':
                 if str(user_message[2]).isnumeric():
                     if int(user_message[2]) < 2 or int(user_message[2]) > 10:
-                        await self.on_reddit(user_message[0], user_message[1].lower())
+                        await channel.send("Last value must be an integer between 2 and 10")
                     else:
                         await self.on_reddit(user_message[0], user_message[1].lower(), '', int(user_message[2]))
                 else:
@@ -173,7 +173,7 @@ class RedditHandler(commands.Cog):
             elif user_message[1].lower() in valid_sort_types and user_message[1].lower() == 'top':
                 if str(user_message[2]).isnumeric():
                     if int(user_message[2]) < 2 or int(user_message[2]) > 10:
-                        await self.on_reddit(user_message[0], user_message[1].lower(), 'all')
+                        await channel.send("Last value must be an integer between 2 and 10")
                     else:
                         await self.on_reddit(user_message[0], user_message[1].lower(), 'all', int(user_message[2]))
                 else:
