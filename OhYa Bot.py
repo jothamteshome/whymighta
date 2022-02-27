@@ -3,7 +3,6 @@ import PropertiesReader
 import time
 
 from discord.ext import commands
-from datetime import datetime, timezone
 
 # Initialize reader for properties file
 prop_reader = PropertiesReader.PropertiesReader()
