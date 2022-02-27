@@ -40,10 +40,13 @@ class OpenWeatherHandler(commands.Cog):
                                                             api_key=weather_api)) as loc_response:
 
                 loc_data = await loc_response.json()
-                lat = loc_data[0]['lat']
-                lon = loc_data[0]['lon']
-                city = loc_data[0]['name'] + ","
-                country = loc_data[0]['country']
+                try:
+                    lat = loc_data[0]['lat']
+                    lon = loc_data[0]['lon']
+                    city = loc_data[0]['name'] + ","
+                    country = loc_data[0]['country']
+                except IndexError:
+                    await channel.send("Location not available. Please try again")
 
                 # If state name exists, save it
                 # otherwise, save an empty string
@@ -88,8 +91,11 @@ class OpenWeatherHandler(commands.Cog):
 
     @commands.command(name='weather_message')
     async def weather_message(self, message):
+        check_help = False
+        channel = message.channel
+        valid_units = ['imperial', 'metric', 'standard']
         user_message = message.content
-        user_message = user_message.replace(self.bot.command_prefix + "weather ", "")
+        user_message = user_message.replace(self.bot.command_prefix + "weather", "")
         user_message = user_message.split()
 
         # Remove any hyphens from locations
@@ -99,22 +105,30 @@ class OpenWeatherHandler(commands.Cog):
 
         # Try to use all user-inputted data points, and if they do not
         # exist, try to use less until just the default function call is sent
-        try:
-            await self.weather(user_message[0], user_message[1], user_message[2], user_message[3])
-        except IndexError:
-            try:
-                await self.weather(user_message[0], "", user_message[1], user_message[2])
-            except IndexError:
-                try:
-                    await self.weather(user_message[0], "", "", user_message[1])
-                except IndexError:
-                    if user_message[0] not in ['imperial', 'metric', 'standard']:
-                        try:
-                            await self.weather(user_message[0])
-                        except IndexError:
-                            await self.weather()
-                    else:
-                        await self.weather()
+        if len(user_message) == 4:
+            if user_message[3].lower() in valid_units:
+                await self.weather(user_message[0], user_message[1], user_message[2].lower(), user_message[3])
+            else:
+                check_help = True
+        elif len(user_message) == 3:
+            if user_message[2].lower() in valid_units:
+                await self.weather(user_message[0], user_message[1], '', user_message[2].lower())
+            else:
+                await self.weather(user_message[0], user_message[1], user_message[2])
+        elif len(user_message) == 2:
+            if user_message[1].lower() in valid_units:
+                await self.weather(user_message[0], '', '', user_message[1].lower())
+            else:
+                await self.weather(user_message[0], '', user_message[1])
+        elif len(user_message) == 1:
+            await self.weather(user_message[0])
+        elif len(user_message) == 0:
+            await self.weather()
+        else:
+            check_help = True
+
+        if check_help:
+            await channel.send("Please check j!help for proper use of this function")
 
 
 def setup(bot):

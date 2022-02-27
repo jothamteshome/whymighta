@@ -46,7 +46,7 @@ async def on_message(message):
     channel = message.channel
     if message.author.bot is not True:
         if message.content == bot.command_prefix:
-            await channel.send("Did you mean to use a function?\n Current functions: weather")
+            await channel.send("Please check j!help for available functions")
         if bot.command_prefix + "help" in message.content:
             help_cog = bot.get_cog('HelpHandler')
             await help_cog.help(message)
