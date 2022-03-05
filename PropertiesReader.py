@@ -5,7 +5,7 @@ import configparser
 class PropertiesReader:
     def __init__(self):
         self.__config_parser = configparser.ConfigParser()
-        self.__config_parser.read('keys.properties')
+        self.__config_parser.read('Resources/keys.properties')
 
     def get(self, key):
         return self.__config_parser.get('keys', key)

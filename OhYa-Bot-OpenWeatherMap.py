@@ -1,9 +1,11 @@
 import PropertiesReader
 
-from discord.ext import commands
+from disnake.ext import commands
 from aiohttp import ClientSession
 
 prop_reader = PropertiesReader.PropertiesReader()
+
+defaults = ('East Lansing', '', '', 'imperial')
 
 
 class OpenWeatherHandler(commands.Cog):
@@ -12,7 +14,7 @@ class OpenWeatherHandler(commands.Cog):
 
     # Weather function that takes in a city and unit type and returns the temperature
     @commands.command(name='weather')
-    async def weather(self, city="East Lansing", state="", country="", units="imperial"):
+    async def weather(self, city=defaults[0], state=defaults[1], country=defaults[2], units=defaults[3]):
         # OpenWeatherMap API key
         weather_api = prop_reader.get('WEATHER_API_KEY')
 
@@ -123,7 +125,7 @@ class OpenWeatherHandler(commands.Cog):
         elif len(user_message) == 1:
             await self.weather(user_message[0])
         elif len(user_message) == 0:
-            await self.weather()
+            await self.weather(defaults[0])
         else:
             check_help = True
 

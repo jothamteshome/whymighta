@@ -1,11 +1,13 @@
-import discord
+import disnake
 import PropertiesReader
 import asyncpraw
 import asyncprawcore
 
-from discord.ext import commands
+from disnake.ext import commands
 
 prop_reader = PropertiesReader.PropertiesReader()
+
+defaults = ('itswiggles_', 'hot', '', 5)
 
 
 class RedditHandler(commands.Cog):
@@ -13,7 +15,7 @@ class RedditHandler(commands.Cog):
         self.bot = bot
 
     @commands.command(name='on_reddit')
-    async def on_reddit(self, sub='itswiggles_', sort_by='hot', top_sort='', num_posts=5):
+    async def on_reddit(self, sub=defaults[0], sort_by=defaults[1], top_sort=defaults[2], num_posts=defaults[3]):
         # Get Discord channel
         channel_id = prop_reader.get('DISCORD_CHANNEL')
         channel = await self.bot.fetch_channel(channel_id)
@@ -63,14 +65,14 @@ class RedditHandler(commands.Cog):
                 embed_string = top_posts[top_sort][0].format(num_posts=num_posts)
                 submissions = top_posts[top_sort][1]
 
-            embed = discord.Embed(title="{embed_string}{subreddit}".format(embed_string=embed_string, subreddit=sub),
+            embed = disnake.Embed(title="{embed_string}{subreddit}".format(embed_string=embed_string, subreddit=sub),
                                   description=subreddit.public_description, color=0xFF5733)
 
             # Get the two more than the specified number of posts
             # on a subreddit to account for the maximum of 2 stickied posts
             async for submission in submissions:
                 post_data = {'title': '', 'selftext': '', 'author': '', 'author_img': '',
-                             'score': '', 'ratio': '', 'url': '', 'permalink' : ''}
+                             'score': '', 'ratio': '', 'url': '', 'permalink': ''}
 
                 # Get first 5 non-stickied posts off of a subreddit
                 if not submission.stickied and count < num_posts:
@@ -94,7 +96,7 @@ class RedditHandler(commands.Cog):
             for post in posts:
 
                 # Create an embed for each post containing its title and text
-                embed = discord.Embed(title=post['title'], description=post['selftext'],
+                embed = disnake.Embed(title=post['title'], description=post['selftext'],
                                       color=0xFF5733, url=post['url'])
 
                 # Set the author to the creator of the reddit post and add a link to their profile
@@ -207,7 +209,7 @@ class RedditHandler(commands.Cog):
         elif len(user_message) == 1:
             await self.on_reddit(user_message[0])
         elif len(user_message) == 0:
-            await self.on_reddit()
+            await self.on_reddit(defaults[0])
 
 
 def setup(bot):

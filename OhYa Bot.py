@@ -1,8 +1,8 @@
-import discord
+import disnake
 import PropertiesReader
 import time
 
-from discord.ext import commands
+from disnake.ext import commands
 
 # Initialize reader for properties file
 prop_reader = PropertiesReader.PropertiesReader()
@@ -10,14 +10,10 @@ prop_reader = PropertiesReader.PropertiesReader()
 # Load bot token from a file
 TOKEN = prop_reader.get('DISCORD_TOKEN')
 
-intents = discord.Intents.default()
-intents.members = True
-intents.messages = True
-intents.guilds = True
-intents.typing = True
+intents = disnake.Intents.all()
 
 # Instantiate a Discord client
-bot = discord.ext.commands.Bot(command_prefix='j!', intents=intents)
+bot = disnake.ext.commands.Bot(command_prefix='j!', intents=intents)
 
 
 @bot.event
@@ -32,7 +28,7 @@ async def on_ready():
 @commands.command(name='ping')
 async def ping(message):
     before = time.monotonic()
-    embed = discord.Embed(title=":information_source: | Pong!", description="\n", color=0x9534eb)
+    embed = disnake.Embed(title=":information_source: | Pong!", description="\n", color=0x9534eb)
     message = await message.channel.send(embed=embed)
     latency = (time.monotonic() - before) * 1000
     embed.add_field(name="Latency", value=str(int(latency)) + "ms", inline=False)
