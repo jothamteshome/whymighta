@@ -12,7 +12,7 @@ class PropertiesReader:
         return self.__config_parser.get('keys', key)
 
     # Get name from important_info.properties file
-    def get_name(self, identifier):
+    def get_user(self, identifier):
         return self.__config_parser.get('names', identifier)
 
     # Open a file with a name stored in important_info.properties file
