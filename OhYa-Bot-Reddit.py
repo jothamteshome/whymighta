@@ -15,11 +15,7 @@ class RedditHandler(commands.Cog):
         self.bot = bot
 
     @commands.command(name='on_reddit')
-    async def on_reddit(self, sub=defaults[0], sort_by=defaults[1], top_sort=defaults[2], num_posts=defaults[3]):
-        # Get Discord channel
-        channel_id = prop_reader.get_key('DISCORD_CHANNEL')
-        channel = await self.bot.fetch_channel(channel_id)
-
+    async def on_reddit(self, channel, sub=defaults[0], sort_by=defaults[1], top_sort=defaults[2], num_posts=defaults[3]):
         # Login to Reddit with asyncpraw
         user = prop_reader.get_key('REDDIT_USERNAME')
         password = prop_reader.get_key('REDDIT_PASSWORD')
@@ -159,7 +155,7 @@ class RedditHandler(commands.Cog):
                         if int(user_message[3]) < 2 or int(user_message[3]) > 10:
                             await channel.send("Last value must be an integer between 2 and 10")
                         else:
-                            await self.on_reddit(user_message[0], user_message[1].lower(),
+                            await self.on_reddit(channel, user_message[0], user_message[1].lower(),
                                                  user_message[2].lower(), int(user_message[3]))
                     else:
                         await channel.send("Last value is not an integer. Please input an integer between 2 and 10")
@@ -179,7 +175,7 @@ class RedditHandler(commands.Cog):
                     if int(user_message[2]) < 2 or int(user_message[2]) > 10:
                         await channel.send("Last value must be an integer between 2 and 10")
                     else:
-                        await self.on_reddit(user_message[0], user_message[1].lower(), '', int(user_message[2]))
+                        await self.on_reddit(channel, user_message[0], user_message[1].lower(), '', int(user_message[2]))
                 else:
                     await channel.send("Last value is not an integer. Please input an integer between 2 and 10")
             elif user_message[1].lower() in valid_sort_types and user_message[1].lower() == 'top':
@@ -187,9 +183,9 @@ class RedditHandler(commands.Cog):
                     if int(user_message[2]) < 2 or int(user_message[2]) > 10:
                         await channel.send("Last value must be an integer between 2 and 10")
                     else:
-                        await self.on_reddit(user_message[0], user_message[1].lower(), 'all', int(user_message[2]))
+                        await self.on_reddit(channel, user_message[0], user_message[1].lower(), 'all', int(user_message[2]))
                 elif user_message[2].lower() in valid_top_sorts:
-                    await self.on_reddit(user_message[0], user_message[1].lower(), user_message[2].lower())
+                    await self.on_reddit(channel, user_message[0], user_message[1].lower(), user_message[2].lower())
                 else:
                     await channel.send("Please check j!help for proper use of this function")
             elif user_message[1].lower() not in valid_sort_types:
@@ -199,18 +195,18 @@ class RedditHandler(commands.Cog):
                 await channel.send("Please check j!help for proper use of this function")
         elif len(user_message) == 2:
             if user_message[1].lower() in valid_sort_types and user_message[1].lower() != 'top':
-                await self.on_reddit(user_message[0], user_message[1].lower())
+                await self.on_reddit(channel, user_message[0], user_message[1].lower())
             elif user_message[1].lower() in valid_sort_types and user_message[1].lower() == 'top':
-                await self.on_reddit(user_message[0], user_message[1].lower(), 'all')
+                await self.on_reddit(channel, user_message[0], user_message[1].lower(), 'all')
             elif user_message[1].lower() not in valid_sort_types:
                 await channel.send(
                     "Not a valid sorting condition\nValid conditions are: Hot | New | Top | Rising")
             else:
                 await channel.send("Please check j!help for proper use of this function")
         elif len(user_message) == 1:
-            await self.on_reddit(user_message[0])
+            await self.on_reddit(channel, user_message[0])
         elif len(user_message) == 0:
-            await self.on_reddit(defaults[0])
+            await self.on_reddit(channel, defaults[0])
 
 
 def setup(bot):

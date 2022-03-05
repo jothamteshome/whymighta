@@ -14,13 +14,9 @@ class OpenWeatherHandler(commands.Cog):
 
     # Weather function that takes in a city and unit type and returns the temperature
     @commands.command(name='weather')
-    async def weather(self, city=defaults[0], state=defaults[1], country=defaults[2], units=defaults[3]):
+    async def weather(self, channel, city=defaults[0], state=defaults[1], country=defaults[2], units=defaults[3]):
         # OpenWeatherMap API key
         weather_api = prop_reader.get_key('WEATHER_API_KEY')
-
-        # Discord channel key
-        channel_key = prop_reader.get_key('DISCORD_CHANNEL')
-        channel = await self.bot.fetch_channel(channel_key)
 
         # Identifiers for the different temperature units
         temp_identifiers = {'imperial': "\u00B0F", 'metric': "\u00B0C", 'standard': "K"}
@@ -109,23 +105,23 @@ class OpenWeatherHandler(commands.Cog):
         # exist, try to use less until just the default function call is sent
         if len(user_message) == 4:
             if user_message[3].lower() in valid_units:
-                await self.weather(user_message[0], user_message[1], user_message[2].lower(), user_message[3])
+                await self.weather(channel, user_message[0], user_message[1], user_message[2].lower(), user_message[3])
             else:
                 check_help = True
         elif len(user_message) == 3:
             if user_message[2].lower() in valid_units:
-                await self.weather(user_message[0], user_message[1], '', user_message[2].lower())
+                await self.weather(channel, user_message[0], user_message[1], '', user_message[2].lower())
             else:
-                await self.weather(user_message[0], user_message[1], user_message[2])
+                await self.weather(channel, user_message[0], user_message[1], user_message[2])
         elif len(user_message) == 2:
             if user_message[1].lower() in valid_units:
-                await self.weather(user_message[0], '', '', user_message[1].lower())
+                await self.weather(channel, user_message[0], '', '', user_message[1].lower())
             else:
-                await self.weather(user_message[0], '', user_message[1])
+                await self.weather(channel, user_message[0], '', user_message[1])
         elif len(user_message) == 1:
-            await self.weather(user_message[0])
+            await self.weather(channel, user_message[0])
         elif len(user_message) == 0:
-            await self.weather(defaults[0])
+            await self.weather(channel, defaults[0])
         else:
             check_help = True
 
