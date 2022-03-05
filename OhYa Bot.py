@@ -8,7 +8,7 @@ from disnake.ext import commands
 prop_reader = PropertiesReader.PropertiesReader()
 
 # Load bot token from a file
-TOKEN = prop_reader.get('DISCORD_TOKEN')
+TOKEN = prop_reader.get_key('DISCORD_TOKEN')
 
 intents = disnake.Intents.all()
 
@@ -23,6 +23,7 @@ async def on_ready():
     bot.load_extension("OhYa-Bot-Reddit")
     bot.load_extension("OhYa-Bot-Help")
     bot.load_extension("OhYa-Bot-Clear")
+    bot.load_extension("OhYa-Bot-TheList")
 
 
 @commands.command(name='ping')
@@ -56,6 +57,9 @@ async def on_message(message):
             await clear_cog.on_clear_message(message)
         elif bot.command_prefix + "ping" in message.content:
             await ping(message)
+        elif bot.command_prefix + "the_list" in message.content:
+            the_list_cog = bot.get_cog('TheListHandler')
+            await the_list_cog.on_list_message(message)
 
 
 bot.run(TOKEN)

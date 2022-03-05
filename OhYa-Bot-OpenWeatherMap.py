@@ -16,10 +16,10 @@ class OpenWeatherHandler(commands.Cog):
     @commands.command(name='weather')
     async def weather(self, city=defaults[0], state=defaults[1], country=defaults[2], units=defaults[3]):
         # OpenWeatherMap API key
-        weather_api = prop_reader.get('WEATHER_API_KEY')
+        weather_api = prop_reader.get_key('WEATHER_API_KEY')
 
         # Discord channel key
-        channel_key = prop_reader.get('DISCORD_CHANNEL')
+        channel_key = prop_reader.get_key('DISCORD_CHANNEL')
         channel = await self.bot.fetch_channel(channel_key)
 
         # Identifiers for the different temperature units

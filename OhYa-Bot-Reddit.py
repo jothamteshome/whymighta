@@ -17,14 +17,14 @@ class RedditHandler(commands.Cog):
     @commands.command(name='on_reddit')
     async def on_reddit(self, sub=defaults[0], sort_by=defaults[1], top_sort=defaults[2], num_posts=defaults[3]):
         # Get Discord channel
-        channel_id = prop_reader.get('DISCORD_CHANNEL')
+        channel_id = prop_reader.get_key('DISCORD_CHANNEL')
         channel = await self.bot.fetch_channel(channel_id)
 
         # Login to Reddit with asyncpraw
-        user = prop_reader.get('REDDIT_USERNAME')
-        password = prop_reader.get('REDDIT_PASSWORD')
-        app_id = prop_reader.get('REDDIT_APP_ID')
-        secret = prop_reader.get('REDDIT_APP_SECRET')
+        user = prop_reader.get_key('REDDIT_USERNAME')
+        password = prop_reader.get_key('REDDIT_PASSWORD')
+        app_id = prop_reader.get_key('REDDIT_APP_ID')
+        secret = prop_reader.get_key('REDDIT_APP_SECRET')
         user_agent = 'OhYa Bot by u/' + user
         reddit = asyncpraw.Reddit(client_id=app_id, client_secret=secret,
                                   user_agent=user_agent, username=user, password=password)
