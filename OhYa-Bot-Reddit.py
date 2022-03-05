@@ -42,12 +42,9 @@ class RedditHandler(commands.Cog):
 
             top_posts = {'now': ("Top {num_posts} posts of the hour in r/", subreddit.top('hour', limit=num_posts + 2)),
                          'day': ("Top {num_posts} posts of the day in r/", subreddit.top('day', limit=num_posts + 2)),
-                         'week': (
-                         "Top {num_posts} posts of the week in r/", subreddit.top('week', limit=num_posts + 2)),
-                         'month': (
-                         "Top {num_posts} posts of the month in r/", subreddit.top('month', limit=num_posts + 2)),
-                         'year': (
-                         "Top {num_posts} posts of the year in r/", subreddit.top('year', limit=num_posts + 2)),
+                         'week': ("Top {num_posts} posts of the week in r/", subreddit.top('week', limit=num_posts + 2)),
+                         'month': ("Top {num_posts} posts of the month in r/", subreddit.top('month', limit=num_posts + 2)),
+                         'year': ("Top {num_posts} posts of the year in r/", subreddit.top('year', limit=num_posts + 2)),
                          'all': ("Top {num_posts} posts of all time in r/", subreddit.top('all', limit=num_posts + 2))
                          }
             embed_string = None
@@ -100,9 +97,13 @@ class RedditHandler(commands.Cog):
                                       color=0xFF5733, url=post['url'])
 
                 # Set the author to the creator of the reddit post and add a link to their profile
-                embed.set_author(name="u/" + post['author'],
-                                 url="{}/u/{author}".format(reddit_web, author=post['author']),
-                                 icon_url=post['author_img'])
+                if post['author'] == '[deleted]':
+                    embed.set_author(name="u/" + post['author'], url="https://bitly.com/98K8eH",
+                                     icon_url=post['author_img'])
+                else:
+                    embed.set_author(name="u/" + post['author'],
+                                     url="{}/u/{author}".format(reddit_web, author=post['author']),
+                                     icon_url=post['author_img'])
                 if "youtube.com" in post['url']:
                     embed.url = post['url']
                     video_id = post['url'].split("v=")[1]
