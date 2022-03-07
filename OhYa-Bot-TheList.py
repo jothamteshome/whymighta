@@ -67,7 +67,7 @@ class TheListHandler(commands.Cog):
 
             # Before adding to the list, confirm message author is
             # allowed to add to the list, then add to the list
-            if user_message[0] == "add":
+            if user_message[0].lower() == "add":
                 if message.author.id == prop_reader.get_user('NAME_ONE_ID'):
                     await self.list_add(user_message[1].title(), message.channel)
                 else:
@@ -77,7 +77,7 @@ class TheListHandler(commands.Cog):
 
             # Before removing from the list, confirm message author
             # is allowed to remove from the list, then remove from the list
-            elif user_message[0] == "remove":
+            elif user_message[0].lower() == "remove":
                 if message.author.id == prop_reader.get_user('NAME_ONE_ID'):
                     await self.list_remove(user_message[1].title(), message.channel)
                 else:
@@ -90,7 +90,7 @@ class TheListHandler(commands.Cog):
         # If message has 1 parameter, check if it
         # is to view the list
         elif len(user_message) == 1:
-            if user_message[0] == "view":
+            if user_message[0].lower() == "view":
                 await self.list_show(message.channel)
             else:
                 check_help = True

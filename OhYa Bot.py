@@ -18,12 +18,12 @@ bot = disnake.ext.commands.Bot(command_prefix='j!', intents=intents)
 
 @bot.event
 async def on_ready():
-    print("Logged in as {0.user}".format(bot))
     bot.load_extension("OhYa-Bot-OpenWeatherMap")
     bot.load_extension("OhYa-Bot-Reddit")
     bot.load_extension("OhYa-Bot-Help")
     bot.load_extension("OhYa-Bot-Clear")
     bot.load_extension("OhYa-Bot-TheList")
+    print("Logged in as {0.user}".format(bot))
 
 
 @commands.command(name='ping')
