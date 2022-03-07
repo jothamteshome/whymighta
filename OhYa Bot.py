@@ -23,6 +23,7 @@ async def on_ready():
     bot.load_extension("OhYa-Bot-Help")
     bot.load_extension("OhYa-Bot-Clear")
     bot.load_extension("OhYa-Bot-TheList")
+    bot.load_extension("OhYa-Bot-Apex")
     print("Logged in as {0.user}".format(bot))
 
 
@@ -60,6 +61,9 @@ async def on_message(message):
         elif bot.command_prefix + "the_list" in message.content:
             the_list_cog = bot.get_cog('TheListHandler')
             await the_list_cog.on_list_message(message)
+        elif bot.command_prefix + "apex" in message.content:
+            apex_cog = bot.get_cog('ApexHandler')
+            await apex_cog.apex_message(message)
 
 
 bot.run(TOKEN)
