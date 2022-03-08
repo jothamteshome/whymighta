@@ -15,7 +15,7 @@ class HelpHandler(commands.Cog):
         embed = None
         if len(user_message) == 0:
             embed = disnake.Embed(title=":information_source: | OhYa Bot Help Menu", color=0x9534eb)
-            embed.add_field(name="-" * 50, value="`weather` `reddit` `clear` `ping` `the_list`", inline=False)
+            embed.add_field(name="-" * 50, value="`weather` `reddit` `clear` `ping` `the_list` `apex`", inline=False)
 
             embed.set_footer(text="Use j!help [command] for more information")
 
@@ -51,11 +51,18 @@ class HelpHandler(commands.Cog):
                 embed = disnake.Embed(title="Ping", description="**`usage`** - j!ping", color=0x9534eb)
 
             elif user_message == "the_list":
-                embed = disnake.Embed(title="The List", description="**`usage'** - j!the_list [action] [person]",
+                embed = disnake.Embed(title="The List", description="**`usage`** - j!the_list [action] [person]",
                                       color=0x9534eb)
                 embed.add_field(name="-" * 95, value="**`action`** - Select which mode to use with this function. "
                                                      "Select from `Add`, `Remove`, and `View`\n\n**`person`** - "
                                                      "Select a person to add or remove from the list")
+            elif user_message == "apex":
+                embed = disnake.Embed(title="Apex", description="**`usage`** - j!apex [player] [platform]",
+                                      color=0x9534eb)
+                embed.add_field(name="-" * 60, value="**`player`** - Select a person to their Apex Legends "
+                                                     "stats\n\n**`platform`** - Select the platform the user plays "
+                                                     "on. Select from `PC`, `PS4`, and `X1`")
+
             else:
                 await channel.send("Please select a valid function.")
         elif len(user_message) > 1:

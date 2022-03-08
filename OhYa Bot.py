@@ -24,27 +24,22 @@ async def on_ready():
     bot.load_extension("OhYa-Bot-Clear")
     bot.load_extension("OhYa-Bot-TheList")
     bot.load_extension("OhYa-Bot-Apex")
+    bot.load_extension("OhYa-Bot-Utilities")
     print("Logged in as {0.user}".format(bot))
-
-
-@commands.command(name='ping')
-async def ping(message):
-    before = time.monotonic()
-    embed = disnake.Embed(title=":information_source: | Pong!", description="\n", color=0x9534eb)
-    message = await message.channel.send(embed=embed)
-    latency = (time.monotonic() - before) * 1000
-    embed.add_field(name="Latency", value=str(int(latency)) + "ms", inline=False)
-    embed.add_field(name="API", value=str(int(bot.latency * 1000)) + "ms", inline=False)
-    await message.edit(embed=embed)
 
 
 @bot.event
 async def on_message(message):
     channel = message.channel
+    utilities = {"ping"}
     if message.author.bot is not True:
         if message.content == bot.command_prefix:
             await channel.send("Please check j!help for available functions")
-        if bot.command_prefix + "help" in message.content:
+        check_util = message.content.replace(bot.command_prefix, "")
+        if check_util in utilities:
+            utilities_cog = bot.get_cog("Utilities")
+            await utilities_cog.utilities_message(message)
+        elif bot.command_prefix + "help" in message.content:
             help_cog = bot.get_cog('HelpHandler')
             await help_cog.help(message)
         elif bot.command_prefix + "weather" in message.content:
@@ -56,8 +51,6 @@ async def on_message(message):
         elif bot.command_prefix + "clear" in message.content:
             clear_cog = bot.get_cog('ClearHandler')
             await clear_cog.on_clear_message(message)
-        elif bot.command_prefix + "ping" in message.content:
-            await ping(message)
         elif bot.command_prefix + "the_list" in message.content:
             the_list_cog = bot.get_cog('TheListHandler')
             await the_list_cog.on_list_message(message)
