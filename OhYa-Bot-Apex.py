@@ -9,6 +9,9 @@ prop_reader = PropertiesReader.PropertiesReader()
 
 apex_data = {}
 
+# Convert rank to roman numeral
+roman_numerals = {1: "I", 2: "II", 3: "III", 4: "IV"}
+
 
 class ApexHandler(commands.Cog):
     def __init__(self, bot):
@@ -43,17 +46,17 @@ class ApexHandler(commands.Cog):
 
                     # Get player stat data from API
                     async with session.get('https://api.mozambiquehe.re/bridge?platform={platform}&uid={uid}&auth='
-                                       '{api_key}'.format(platform=platform, uid=uid,
-                                                          api_key=apex_api)) as stats_res:
+                                           '{api_key}'.format(platform=platform, uid=uid,
+                                                              api_key=apex_api)) as stats_res:
 
                         # Save specific user stats
                         stats_data = await stats_res.json(content_type='text/plain')
                         player_info['level'] = stats_data['global']['level']
                         player_info['br_rank'] = stats_data['global']['rank']['rankName'] + " " + \
-                            str(stats_data['global']['rank']['rankDiv'])
+                            roman_numerals[stats_data['global']['rank']['rankDiv']]
                         player_info['br_score'] = stats_data['global']['rank']['rankScore']
                         player_info['arena_rank'] = stats_data['global']['arena']['rankName'] + " " + \
-                            str(stats_data['global']['arena']['rankDiv'])
+                            roman_numerals[stats_data['global']['arena']['rankDiv']]
                         player_info['arena_score'] = stats_data['global']['arena']['rankScore']
                         player_info['current_legend'] = stats_data['legends']['selected']['LegendName']
                         player_info['legend_icon'] = stats_data['legends']['selected']['ImgAssets']['icon']
@@ -74,6 +77,7 @@ class ApexHandler(commands.Cog):
 
     @commands.command(name='Apex')
     async def apex_stats(self, channel, player, platform):
+        embed = disnake.Embed(title=player + '\'s Apex Stats', description="-" * 40, color=0x9534eb)
         # If user's data is already stored, check if it has been
         # 6 minutes since the last API call
         if (player, platform) in apex_data:
@@ -84,29 +88,31 @@ class ApexHandler(commands.Cog):
                 # Update user data and send user's stats to channel
                 keep_info = await self.populate_apex(channel, player, platform)
                 if keep_info:
-                    embed = disnake.Embed(title=player + '\'s Apex Stats', color=0x9534eb)
                     embed.add_field(name='Level', value=apex_data[(player, platform)]['level'], inline=True)
                     embed.add_field(name='Current Legend', value=apex_data[(player, platform)]['current_legend'],
                                     inline=True)
-                    embed.add_field(name='BR Rank', value=apex_data[(player, platform)]['br_rank'])
+                    embed.add_field(name='\u200b', value='\u200b', inline=True)
+                    embed.add_field(name='BR Rank', value=apex_data[(player, platform)]['br_rank'], inline=True)
                     embed.add_field(name='BR Score', value=apex_data[(player, platform)]['br_score'], inline=True)
-                    embed.add_field(name='Arena Rank', value=apex_data[(player, platform)]['arena_rank'])
+                    embed.add_field(name='\u200b', value='\u200b', inline=True)
+                    embed.add_field(name='Arena Rank', value=apex_data[(player, platform)]['arena_rank'], inline=True)
                     embed.add_field(name='Arena Score', value=apex_data[(player, platform)]['arena_score'], inline=True)
-                    embed.set_thumbnail(apex_data[(player, platform)]['legend_icon'])
+                    embed.add_field(name='\u200b', value='\u200b', inline=True)
                     await channel.send(embed=embed)
 
             # If it has not been over 6 minutes since last API call for this user,
             # send previously saved stats to channel
             else:
-                embed = disnake.Embed(title=player + '\'s Apex Stats', color=0x9534eb)
                 embed.add_field(name='Level', value=apex_data[(player, platform)]['level'], inline=True)
                 embed.add_field(name='Current Legend', value=apex_data[(player, platform)]['current_legend'],
                                 inline=True)
-                embed.add_field(name='BR Rank', value=apex_data[(player, platform)]['br_rank'])
+                embed.add_field(name='\u200b', value='\u200b', inline=True)
+                embed.add_field(name='BR Rank', value=apex_data[(player, platform)]['br_rank'], inline=True)
                 embed.add_field(name='BR Score', value=apex_data[(player, platform)]['br_score'], inline=True)
-                embed.add_field(name='Arena Rank', value=apex_data[(player, platform)]['arena_rank'])
+                embed.add_field(name='\u200b', value='\u200b', inline=True)
+                embed.add_field(name='Arena Rank', value=apex_data[(player, platform)]['arena_rank'], inline=True)
                 embed.add_field(name='Arena Score', value=apex_data[(player, platform)]['arena_score'], inline=True)
-                embed.set_thumbnail(apex_data[(player, platform)]['legend_icon'])
+                embed.add_field(name='\u200b', value='\u200b', inline=True)
                 await channel.send(embed=embed)
         else:
 
@@ -114,16 +120,57 @@ class ApexHandler(commands.Cog):
             # user's data and send stats to channel
             keep_info = await self.populate_apex(channel, player, platform)
             if keep_info:
-                embed = disnake.Embed(title=player + '\'s Apex Stats', color=0x9534eb)
                 embed.add_field(name='Level', value=apex_data[(player, platform)]['level'], inline=True)
                 embed.add_field(name='Current Legend', value=apex_data[(player, platform)]['current_legend'],
                                 inline=True)
-                embed.add_field(name='BR Rank', value=apex_data[(player, platform)]['br_rank'])
+                embed.add_field(name='\u200b', value='\u200b', inline=True)
+                embed.add_field(name='BR Rank', value=apex_data[(player, platform)]['br_rank'], inline=True)
                 embed.add_field(name='BR Score', value=apex_data[(player, platform)]['br_score'], inline=True)
-                embed.add_field(name='Arena Rank', value=apex_data[(player, platform)]['arena_rank'])
+                embed.add_field(name='\u200b', value='\u200b', inline=True)
+                embed.add_field(name='Arena Rank', value=apex_data[(player, platform)]['arena_rank'], inline=True)
                 embed.add_field(name='Arena Score', value=apex_data[(player, platform)]['arena_score'], inline=True)
-                embed.set_thumbnail(apex_data[(player, platform)]['legend_icon'])
+                embed.add_field(name='\u200b', value='\u200b', inline=True)
                 await channel.send(embed=embed)
+
+    @commands.command(name='Apex Map')
+    async def apex_map(self, channel):
+        # Get the Apex Legends API Key
+        api_key = prop_reader.get_key('APEX_API_KEY')
+
+        # Create an embed to add map rotation data to
+        embed = disnake.Embed(title="Map Rotation", description="-" * 50, color=0x9534eb)
+
+        # Make API calls with aiohttp
+        async with ClientSession(trust_env=True) as session:
+            async with session.get('https://api.mozambiquehe.re/maprotation?version=2&auth={api_key}'
+                                           .format(api_key=api_key)) as rotation_res:
+                rotation_data = await rotation_res.json(content_type='text/plain')
+
+                # Add specific data to embed
+                embed.add_field(name="Battle Royale", value=rotation_data["battle_royale"]["current"]["map"],
+                                inline=True)
+                embed.add_field(name="Next Map", value=rotation_data["battle_royale"]["next"]["map"], inline=True)
+                embed.add_field(name="Time Left", value=rotation_data["battle_royale"]["current"]["remainingTimer"],
+                                inline=True)
+                embed.add_field(name="Arenas", value=rotation_data["arenas"]["current"]["map"], inline=True)
+                embed.add_field(name="Next Map", value=rotation_data["arenas"]["next"]["map"], inline=True)
+                embed.add_field(name="Time Left", value=rotation_data["arenas"]["current"]["remainingTimer"],
+                                inline=True)
+                embed.add_field(name="Ranked BR", value=rotation_data["ranked"]["current"]["map"],
+                                inline=True)
+                embed.add_field(name="Next Map", value=rotation_data["ranked"]["next"]["map"], inline=True)
+                embed.add_field(name="\u200b", value="\u200b", inline=True)
+                embed.add_field(name="Ranked Arenas", value=rotation_data["arenasRanked"]["current"]["map"],
+                                inline=True)
+                embed.add_field(name="Next Map", value=rotation_data["arenasRanked"]["next"]["map"], inline=True)
+                embed.add_field(name="Time Left", value=rotation_data["arenasRanked"]["current"]["remainingTimer"],
+                                inline=True)
+
+            # Close aiohttp session
+            await session.close()
+
+        # Send embed with map data to channel
+        await channel.send(embed=embed)
 
     @commands.command(name='Apex Message')
     async def apex_message(self, message):
@@ -135,6 +182,12 @@ class ApexHandler(commands.Cog):
         # user to check help message
         if len(user_message) == 2:
             await self.apex_stats(message.channel, user_message[0], user_message[1].upper())
+        elif len(user_message) == 1:
+
+            # If user input is 'map', get map data
+            if user_message[0] == "map":
+                await self.apex_map(message.channel)
+
         else:
             check_help = True
 
