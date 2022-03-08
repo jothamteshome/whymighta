@@ -21,7 +21,6 @@ async def on_ready():
     bot.load_extension("OhYa-Bot-OpenWeatherMap")
     bot.load_extension("OhYa-Bot-Reddit")
     bot.load_extension("OhYa-Bot-Help")
-    bot.load_extension("OhYa-Bot-Clear")
     bot.load_extension("OhYa-Bot-TheList")
     bot.load_extension("OhYa-Bot-Apex")
     bot.load_extension("OhYa-Bot-Utilities")
@@ -31,12 +30,13 @@ async def on_ready():
 @bot.event
 async def on_message(message):
     channel = message.channel
-    utilities = {"ping"}
+    utilities = {"ping", "clear"}
     if message.author.bot is not True:
         if message.content == bot.command_prefix:
             await channel.send("Please check j!help for available functions")
         check_util = message.content.replace(bot.command_prefix, "")
-        if check_util in utilities:
+        check_util = check_util.split()
+        if check_util[0] in utilities:
             utilities_cog = bot.get_cog("Utilities")
             await utilities_cog.utilities_message(message)
         elif bot.command_prefix + "help" in message.content:
@@ -48,9 +48,6 @@ async def on_message(message):
         elif bot.command_prefix + "reddit" in message.content:
             reddit_cog = bot.get_cog('RedditHandler')
             await reddit_cog.on_reddit_message(message)
-        elif bot.command_prefix + "clear" in message.content:
-            clear_cog = bot.get_cog('ClearHandler')
-            await clear_cog.on_clear_message(message)
         elif bot.command_prefix + "the_list" in message.content:
             the_list_cog = bot.get_cog('TheListHandler')
             await the_list_cog.on_list_message(message)
