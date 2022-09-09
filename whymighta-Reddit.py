@@ -21,7 +21,7 @@ class RedditHandler(commands.Cog):
         password = prop_reader.get_key('REDDIT_PASSWORD')
         app_id = prop_reader.get_key('REDDIT_APP_ID')
         secret = prop_reader.get_key('REDDIT_APP_SECRET')
-        user_agent = 'OhYa Bot by u/' + user
+        user_agent = 'whymighta by u/' + user
         reddit = asyncpraw.Reddit(client_id=app_id, client_secret=secret,
                                   user_agent=user_agent, username=user, password=password)
 

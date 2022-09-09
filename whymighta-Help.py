@@ -14,8 +14,10 @@ class HelpHandler(commands.Cog):
         user_message = user_message.split()
         embed = None
         if len(user_message) == 0:
-            embed = disnake.Embed(title=":information_source: | OhYa Bot Help Menu", color=0x9534eb)
-            embed.add_field(name="-" * 50, value="`weather` `reddit` `clear` `ping` `the_list` `apex`", inline=False)
+            embed = disnake.Embed(title=":information_source: | whymighta Help Menu", color=0x9534eb)
+            embed.add_field(name="\u200b", value="\n\n**Main Commands**\n" + "-" * 50 + "\n`weather` `reddit` `apex`"
+                                                 "\n\n**Utility Commands**\n" + "-" * 50 + "\n`clear` `ping`"
+                                                 "\n\n**Other**\n" + "-" * 50 + "\n`the_list`", inline=False)
 
             embed.set_footer(text="Use j!help [command] for more information")
 
@@ -57,15 +59,23 @@ class HelpHandler(commands.Cog):
                                                      "Select from `Add`, `Remove`, and `View`\n\n**`person`** - "
                                                      "Select a person to add or remove from the list")
             elif user_message == "apex":
-                embed = disnake.Embed(title="Apex", description="**`usage`** - j!apex [player] [platform]",
-                                      color=0x9534eb)
-                embed.add_field(name="-" * 60, value="**`player`** - Select a person to their Apex Legends "
-                                                     "stats\n\n**`platform`** - Select the platform the user plays "
-                                                     "on. Select from `PC`, `PS4`, and `X1`")
-
+                embed = disnake.Embed(title="Apex Functions", color=0x9534eb)
+                embed.add_field("-" * 60, value="**`stats`** - Retrieve the stats of a player\n\n**`map`** - Check "
+                                                "the current map rotation")
+                embed.set_footer(text="Use j!help apex [command] to see how to use the following functions")
             else:
                 await channel.send("Please select a valid function.")
-        elif len(user_message) > 1:
+        elif len(user_message) == 2:
+            if user_message[0] == "apex" and user_message[1] == "stats":
+                embed = disnake.Embed(title="Apex Stats", description="**`usage`** - j!apex stats [player] [platform]",
+                                      color=0x9534eb)
+                embed.add_field(name="-" * 95, value="**`player`** - Select a person to their Apex Legends "
+                                                     "stats\n\n**`platform`** - Select the platform the user plays "
+                                                     "on. Select from `PC`, `PS4`, and `X1`")
+            elif user_message[0] == "apex" and user_message[1] == "map":
+                embed = disnake.Embed(title="Apex Map Rotation", description="**`usage`** - j!apex map",
+                                      color=0x9534eb)
+        else:
             await channel.send("Please select a valid function.")
 
         if embed is not None:

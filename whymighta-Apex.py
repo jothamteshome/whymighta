@@ -180,13 +180,18 @@ class ApexHandler(commands.Cog):
         user_message = user_message.split()
         # If there are two parameters, call stats function, otherwise advise
         # user to check help message
-        if len(user_message) == 2:
-            await self.apex_stats(message.channel, user_message[0], user_message[1].upper())
+        if len(user_message) == 3:
+            if user_message[0] == "stats":
+                await self.apex_stats(message.channel, user_message[1], user_message[2].upper())
+            else:
+                check_help = True
         elif len(user_message) == 1:
 
             # If user input is 'map', get map data
             if user_message[0] == "map":
                 await self.apex_map(message.channel)
+            else:
+                check_help = True
 
         else:
             check_help = True
