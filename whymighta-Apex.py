@@ -35,8 +35,8 @@ class ApexHandler(commands.Cog):
 
             # Get user id from username and platform
             async with session.get('https://api.mozambiquehe.re/nametouid?player={user}&'
-                                   'platform={platform}&auth={api_key}'
-                                           .format(user=user, platform=platform, api_key=apex_api)) as uid_res:
+                                   'platform={platform}&auth={api_key}'.format(user=user, platform=platform,
+                                                                               api_key=apex_api)) as uid_res:
                 uid_data = await uid_res.json(content_type='text/plain')
                 try:
                     if platform == "PC":
@@ -51,15 +51,21 @@ class ApexHandler(commands.Cog):
 
                         # Save specific user stats
                         stats_data = await stats_res.json(content_type='text/plain')
+
                         player_info['level'] = stats_data['global']['level']
-                        player_info['br_rank'] = stats_data['global']['rank']['rankName'] + " " + \
-                            roman_numerals[stats_data['global']['rank']['rankDiv']]
+                        if stats_data['global']['rank']['rankName'] == "Unranked":
+                            player_info['br_rank'] = stats_data['global']['rank']['rankName']
+                        else:
+                            player_info['br_rank'] = stats_data['global']['rank']['rankName'] + " " + \
+                                                     roman_numerals[stats_data['global']['rank']['rankDiv']]
                         player_info['br_score'] = stats_data['global']['rank']['rankScore']
-                        player_info['arena_rank'] = stats_data['global']['arena']['rankName'] + " " + \
-                            roman_numerals[stats_data['global']['arena']['rankDiv']]
+                        if stats_data['global']['arena']['rankName'] == "Unranked":
+                            player_info['arena_rank'] = stats_data['global']['arena']['rankName']
+                        else:
+                            player_info['arena_rank'] = stats_data['global']['arena']['rankName'] + " " + \
+                                                        roman_numerals[stats_data['global']['arena']['rankDiv']]
                         player_info['arena_score'] = stats_data['global']['arena']['rankScore']
                         player_info['current_legend'] = stats_data['legends']['selected']['LegendName']
-                        player_info['legend_icon'] = stats_data['legends']['selected']['ImgAssets']['icon']
 
                     keep_info = True
 
