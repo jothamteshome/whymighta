@@ -2,7 +2,6 @@ import disnake
 import PropertiesReader
 import time
 
-from disnake.ext import commands
 from aiohttp import ClientSession
 
 prop_reader = PropertiesReader.PropertiesReader()
@@ -13,11 +12,10 @@ apex_data = {}
 roman_numerals = {1: "I", 2: "II", 3: "III", 4: "IV"}
 
 
-class ApexHandler(commands.Cog):
+class ApexHandler:
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="Populate Apex Dict")
     async def populate_apex(self, channel, user, platform):
         # Apex Legends API Key
         apex_api = prop_reader.get_key('APEX_API_KEY')
@@ -81,7 +79,6 @@ class ApexHandler(commands.Cog):
             apex_data[(user, platform)] = player_info
         return keep_info
 
-    @commands.command(name='Apex')
     async def apex_stats(self, channel, player, platform):
         embed = disnake.Embed(title=player + '\'s Apex Stats', description="-" * 40, color=0x9534eb)
         # If user's data is already stored, check if it has been
@@ -138,7 +135,6 @@ class ApexHandler(commands.Cog):
                 embed.add_field(name='\u200b', value='\u200b', inline=True)
                 await channel.send(embed=embed)
 
-    @commands.command(name='Apex Map')
     async def apex_map(self, channel):
         # Get the Apex Legends API Key
         api_key = prop_reader.get_key('APEX_API_KEY')
@@ -178,7 +174,6 @@ class ApexHandler(commands.Cog):
         # Send embed with map data to channel
         await channel.send(embed=embed)
 
-    @commands.command(name='Apex Message')
     async def apex_message(self, message):
         check_help = False
         user_message = message.content
@@ -204,7 +199,3 @@ class ApexHandler(commands.Cog):
 
         if check_help:
             await message.channel.send("Please check j!help for proper use of this function")
-
-
-def setup(bot):
-    bot.add_cog(ApexHandler(bot))

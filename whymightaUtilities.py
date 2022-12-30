@@ -1,14 +1,11 @@
 import disnake
 import time
 
-from disnake.ext import commands
 
-
-class Utilities(commands.Cog):
+class Utilities:
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name='ping')
     async def ping(self, message):
         before = time.monotonic()
         embed = disnake.Embed(title=":information_source: | Pong!", description="\n", color=0x9534eb)
@@ -18,7 +15,6 @@ class Utilities(commands.Cog):
         embed.add_field(name="API", value=str(int(self.bot.latency * 1000)) + "ms", inline=False)
         await message.edit(embed=embed)
 
-    @commands.command(name='clear')
     async def clear(self, channel, number=5):
         # Add one to account for the calling message
         await channel.purge(limit=number + 1)
@@ -48,7 +44,3 @@ class Utilities(commands.Cog):
                 await message.channel.send(
                     "This command is only available to Server Administrators. Contact an administrator "
                     "for assistance.")
-
-
-def setup(bot):
-    bot.add_cog(Utilities(bot))

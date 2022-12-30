@@ -2,6 +2,13 @@ import disnake
 import PropertiesReader
 import time
 
+from whymightaApex import ApexHandler
+from whymightaHelp import HelpHandler
+from whymightaOpenWeatherMap import OpenWeatherHandler
+from whymightaReddit import RedditHandler
+from whymightaTheList import TheListHandler
+from whymightaUtilities import Utilities
+
 from disnake.ext import commands
 
 # Initialize reader for properties file
@@ -18,12 +25,6 @@ bot = disnake.ext.commands.Bot(command_prefix='j!', intents=intents)
 
 @bot.event
 async def on_ready():
-    bot.load_extension("whymighta-OpenWeatherMap")
-    bot.load_extension("whymighta-Reddit")
-    bot.load_extension("whymighta-Help")
-    bot.load_extension("whymighta-TheList")
-    bot.load_extension("whymighta-Apex")
-    bot.load_extension("whymighta-Utilities")
     print("Logged in as {0.user}".format(bot))
 
 
@@ -37,23 +38,17 @@ async def on_message(message):
         check_util = message.content.replace(bot.command_prefix, "")
         check_util = check_util.split()
         if check_util[0] in utilities:
-            utilities_cog = bot.get_cog("Utilities")
-            await utilities_cog.utilities_message(message)
+            await Utilities(bot).utilities_message(message)
         elif bot.command_prefix + "help" in message.content:
-            help_cog = bot.get_cog('HelpHandler')
-            await help_cog.help(message)
+            await HelpHandler(bot).help(message=message)
         elif bot.command_prefix + "weather" in message.content:
-            weather_cog = bot.get_cog('OpenWeatherHandler')
-            await weather_cog.weather_message(message)
+            await OpenWeatherHandler(bot).weather_message(message)
         elif bot.command_prefix + "reddit" in message.content:
-            reddit_cog = bot.get_cog('RedditHandler')
-            await reddit_cog.on_reddit_message(message)
+            await RedditHandler(bot).on_reddit_message(message)
         elif bot.command_prefix + "the_list" in message.content:
-            the_list_cog = bot.get_cog('TheListHandler')
-            await the_list_cog.on_list_message(message)
+            await TheListHandler(bot).on_list_message(message)
         elif bot.command_prefix + "apex" in message.content:
-            apex_cog = bot.get_cog('ApexHandler')
-            await apex_cog.apex_message(message)
+            await ApexHandler(bot).apex_message(message)
 
 
 bot.run(TOKEN)

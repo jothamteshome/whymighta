@@ -1,6 +1,5 @@
 import PropertiesReader
 
-from disnake.ext import commands
 from aiohttp import ClientSession
 
 prop_reader = PropertiesReader.PropertiesReader()
@@ -8,12 +7,11 @@ prop_reader = PropertiesReader.PropertiesReader()
 defaults = ('East Lansing', '', '', 'imperial')
 
 
-class OpenWeatherHandler(commands.Cog):
+class OpenWeatherHandler:
     def __init__(self, bot):
         self.bot = bot
 
     # Weather function that takes in a city and unit type and returns the temperature
-    @commands.command(name='weather')
     async def weather(self, channel, city=defaults[0], state=defaults[1], country=defaults[2], units=defaults[3]):
         # OpenWeatherMap API key
         weather_api = prop_reader.get_key('WEATHER_API_KEY')
@@ -87,7 +85,6 @@ class OpenWeatherHandler(commands.Cog):
                 except KeyError:
                     await channel.send("Invalid unit type. Valid unit types are standard, metric, or imperial.")
 
-    @commands.command(name='weather_message')
     async def weather_message(self, message):
         check_help = False
         channel = message.channel
@@ -127,7 +124,3 @@ class OpenWeatherHandler(commands.Cog):
 
         if check_help:
             await channel.send("Please check j!help for proper use of this function")
-
-
-def setup(bot):
-    bot.add_cog(OpenWeatherHandler(bot))

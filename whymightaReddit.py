@@ -3,18 +3,15 @@ import PropertiesReader
 import asyncpraw
 import asyncprawcore
 
-from disnake.ext import commands
-
 prop_reader = PropertiesReader.PropertiesReader()
 
 defaults = ('itswiggles_', 'hot', '', 5)
 
 
-class RedditHandler(commands.Cog):
+class RedditHandler:
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name='on_reddit')
     async def on_reddit(self, channel, sub=defaults[0], sort_by=defaults[1], top_sort=defaults[2], num_posts=defaults[3]):
         # Login to Reddit with asyncpraw
         user = prop_reader.get_key('REDDIT_USERNAME')
@@ -122,7 +119,6 @@ class RedditHandler(commands.Cog):
         except asyncprawcore.exceptions.Redirect:
             await channel.send("Subreddit r/{subreddit_name} doesn't exist.".format(subreddit_name=sub))
 
-    @commands.command('on_reddit_message')
     async def on_reddit_message(self, message):
         channel = message.channel
         valid_sort_types = ['hot', 'new', 'top', 'rising']
@@ -207,7 +203,3 @@ class RedditHandler(commands.Cog):
             await self.on_reddit(channel, user_message[0])
         elif len(user_message) == 0:
             await self.on_reddit(channel, defaults[0])
-
-
-def setup(bot):
-    bot.add_cog(RedditHandler(bot))

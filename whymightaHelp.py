@@ -1,12 +1,10 @@
 import disnake
-from disnake.ext import commands
 
 
-class HelpHandler(commands.Cog):
+class HelpHandler:
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name='OhYa_help')
     async def help(self, message):
         channel = message.channel
         user_message = message.content
@@ -81,6 +79,3 @@ class HelpHandler(commands.Cog):
         if embed is not None:
             await channel.send(embed=embed)
 
-
-def setup(bot):
-    bot.add_cog(HelpHandler(bot))

@@ -2,9 +2,6 @@ import disnake
 import PropertiesReader
 import signal
 
-
-from disnake.ext import commands
-
 prop_reader = PropertiesReader.PropertiesReader()
 
 # Read in the names from file and store them in dictionary
@@ -27,7 +24,7 @@ def signal_handler(sig, frame):
 signal.signal(signal.SIGINT, signal_handler)
 
 
-class TheListHandler(commands.Cog):
+class TheListHandler:
     def __init__(self, bot):
         self.bot = bot
 
@@ -53,7 +50,6 @@ class TheListHandler(commands.Cog):
         embed.description = formatted_line
         await channel.send(embed=embed)
 
-    @commands.command(name='on_list_message')
     async def on_list_message(self, message):
         check_help = False
         # Receive parameters from message
@@ -103,7 +99,3 @@ class TheListHandler(commands.Cog):
 
         if check_help:
             await message.channel.send("Please check j!help for proper use of this function")
-
-
-def setup(bot):
-    bot.add_cog(TheListHandler(bot))
