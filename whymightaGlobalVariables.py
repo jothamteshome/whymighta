@@ -8,6 +8,10 @@ from disnake.ext import commands
 guild_ids = []
 intents = disnake.Intents.all()
 
+birthdate_user = {}
+
+user_birthdate = {}
+
 
 # Instantiate a Discord client
 bot = disnake.ext.commands.InteractionBot(intents=intents)

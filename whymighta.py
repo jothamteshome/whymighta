@@ -1,14 +1,15 @@
 import disnake
 import PropertiesReader
-import time
 import whymightaGlobalVariables
 import whymightaUtilities
 import whymightaHelp
 import whymightaOpenWeatherMap
+import whymightaBirthdays
 
 from whymightaApex import ApexHandler
 from whymightaReddit import RedditHandler
 from whymightaTheList import TheListHandler
+
 
 # Initialize reader for properties file
 prop_reader = PropertiesReader.PropertiesReader()
@@ -18,6 +19,9 @@ TOKEN = prop_reader.get_key('DISCORD_TOKEN')
 
 @whymightaGlobalVariables.bot.event
 async def on_ready():
+    whymightaBirthdays.loadBirthdays()
+    whymightaBirthdays.birthdayCheck.start()
+    whymightaBirthdays.saveBirthdays.start()
     print("Logged in as {0.user}".format(whymightaGlobalVariables.bot))
 
 
