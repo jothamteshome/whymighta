@@ -4,9 +4,9 @@ import time
 import whymightaGlobalVariables
 import whymightaUtilities
 import whymightaHelp
+import whymightaOpenWeatherMap
 
 from whymightaApex import ApexHandler
-from whymightaOpenWeatherMap import OpenWeatherHandler
 from whymightaReddit import RedditHandler
 from whymightaTheList import TheListHandler
 
@@ -27,9 +27,7 @@ async def on_message(message):
     if message.author.bot is not True:
         if message.content == whymightaGlobalVariables.bot.command_prefix:
             await channel.send("Please check j!help for available functions")
-        if whymightaGlobalVariables.bot.command_prefix + "weather" in message.content:
-            await OpenWeatherHandler(whymightaGlobalVariables.bot).weather_message(message)
-        elif whymightaGlobalVariables.bot.command_prefix + "reddit" in message.content:
+        if whymightaGlobalVariables.bot.command_prefix + "reddit" in message.content:
             await RedditHandler(whymightaGlobalVariables.bot).on_reddit_message(message)
         elif whymightaGlobalVariables.bot.command_prefix + "the_list" in message.content:
             await TheListHandler(whymightaGlobalVariables.bot).on_list_message(message)

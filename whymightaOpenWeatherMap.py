@@ -2,17 +2,18 @@ import PropertiesReader
 
 from aiohttp import ClientSession
 
+import whymightaGlobalVariables
+
 prop_reader = PropertiesReader.PropertiesReader()
 
-defaults = ('East Lansing', '', '', 'imperial')
+@whymightaGlobalVariables.bot.slash_command(
+    description="Check the weather in a specific city",
+    guild_ids=whymightaGlobalVariables.guild_ids)
+async def weather(inter, units: str, city: str, state_code: str = "", country_code: str = ""):
+    valid_units = {"F": 'imperial', "C": 'metric', "K": 'standard'}
 
-
-class OpenWeatherHandler:
-    def __init__(self, bot):
-        self.bot = bot
-
-    # Weather function that takes in a city and unit type and returns the temperature
-    async def weather(self, channel, city=defaults[0], state=defaults[1], country=defaults[2], units=defaults[3]):
+    if units.upper() in valid_units:
+        units = valid_units[units.upper()]
         # OpenWeatherMap API key
         weather_api = prop_reader.get_key('WEATHER_API_KEY')
 
@@ -31,7 +32,7 @@ class OpenWeatherHandler:
             # Store and process location data from OpenWeatherMap Geocoding API
             async with session.get('https://api.openweathermap.org/geo/1.0/direct?q={city_name},{state_code},'
                                    '{country_code}&limit={limit}&'
-                                   'appid={api_key}'.format(city_name=city, state_code=state, country_code=country,
+                                   'appid={api_key}'.format(city_name=city, state_code=state_code, country_code=country_code,
                                                             limit=1,
                                                             api_key=weather_api)) as loc_response:
 
@@ -40,9 +41,9 @@ class OpenWeatherHandler:
                     lat = loc_data[0]['lat']
                     lon = loc_data[0]['lon']
                     city = loc_data[0]['name'] + ","
-                    country = loc_data[0]['country']
+                    country_code = loc_data[0]['country']
                 except IndexError:
-                    await channel.send("Location not available. Please try again")
+                    await inter.response.send_message("Location not available. Please try again")
 
                 # If state name exists, save it
                 # otherwise, save an empty string
@@ -53,7 +54,7 @@ class OpenWeatherHandler:
 
                 # Convert country code to common name
                 async with session.get(
-                        'https://restcountries.com/v3.1/alpha/{code}'.format(code=country)) as code_response:
+                        'https://restcountries.com/v3.1/alpha/{code}'.format(code=country_code)) as code_response:
                     code_data = await code_response.json()
                     country = code_data[0]['name']['common']
 
@@ -70,11 +71,11 @@ class OpenWeatherHandler:
                         low_temp = weather_data['main']['temp_min']
                         current_condition = weather_conditions[weather_data['weather'][0]['main'].lower()]
                     except KeyError:
-                        await channel.send("Invalid entry. Please check spelling and try again.")
+                        await inter.response.send_message("Invalid entry. Please check spelling and try again.")
 
                 # Try to send weather information to Discord server
                 try:
-                    await channel.send(
+                    await inter.response.send_message(
                         "The temperature in {city} {state} {country} right now is {current:.2f}{temp_id}, "
                         "with a high of {high:.2f}{temp_id} and a low of {low:.2f}{temp_id}. "
                         "{condition}".format(city=city, state=state, country=country,
@@ -83,44 +84,8 @@ class OpenWeatherHandler:
                                              condition=current_condition))
                 # If KeyError exception because invalid unit, send valid types to Discord server
                 except KeyError:
-                    await channel.send("Invalid unit type. Valid unit types are standard, metric, or imperial.")
+                    await inter.response.send_message("Invalid unit type. Valid unit types are standard, metric, or imperial.")
 
-    async def weather_message(self, message):
-        check_help = False
-        channel = message.channel
-        valid_units = ['imperial', 'metric', 'standard']
-        user_message = message.content
-        user_message = user_message.replace(self.bot.command_prefix + "weather", "")
-        user_message = user_message.split()
+    else:
+        await inter.response.send_message("Invalid unit type. Valid unit types are standard, metric, or imperial.")
 
-        # Remove any hyphens from locations
-        for i in range(0, len(user_message)):
-            if "-" in user_message[i]:
-                user_message[i] = user_message[i].replace("-", " ")
-
-        # Try to use all user-inputted data points, and if they do not
-        # exist, try to use less until just the default function call is sent
-        if len(user_message) == 4:
-            if user_message[3].lower() in valid_units:
-                await self.weather(channel, user_message[0], user_message[1], user_message[2].lower(), user_message[3])
-            else:
-                check_help = True
-        elif len(user_message) == 3:
-            if user_message[2].lower() in valid_units:
-                await self.weather(channel, user_message[0], user_message[1], '', user_message[2].lower())
-            else:
-                await self.weather(channel, user_message[0], user_message[1], user_message[2])
-        elif len(user_message) == 2:
-            if user_message[1].lower() in valid_units:
-                await self.weather(channel, user_message[0], '', '', user_message[1].lower())
-            else:
-                await self.weather(channel, user_message[0], '', user_message[1])
-        elif len(user_message) == 1:
-            await self.weather(channel, user_message[0])
-        elif len(user_message) == 0:
-            await self.weather(channel, defaults[0])
-        else:
-            check_help = True
-
-        if check_help:
-            await channel.send("Please check j!help for proper use of this function")
