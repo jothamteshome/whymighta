@@ -31,8 +31,8 @@ async def birthdayCheck():
 @whymightaGlobalVariables.bot.slash_command(
     description="Add or remove your birthday to receive a message from whymighta!",
     guild_ids=whymightaGlobalVariables.guild_ids)
-async def birthday(inter, subcommand: str, date: str = ""):
-    if subcommand.lower() == "add":
+async def birthday(inter, add_remove: str, date: str = ""):
+    if add_remove.lower() == "add":
         if birthday == "":
             await inter.response.send_message("Please include a birthdate in the form of YYYY-MM-DD")
         else:
@@ -62,7 +62,7 @@ async def birthday(inter, subcommand: str, date: str = ""):
                 await inter.response.send_message("There was an error processing that date. Please input a birthdate in the form YYYY-MM-DD")
 
 
-    elif subcommand.lower() == "remove":
+    elif add_remove.lower() == "remove":
         if inter.author.id not in whymightaGlobalVariables.user_birthdate:
             await inter.response.send_message(f"{inter.author.mention}, your birthday was not in the records. "
                                               f"You can add it now using the `add` subcommand.")
