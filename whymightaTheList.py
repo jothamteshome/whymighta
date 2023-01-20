@@ -1,12 +1,11 @@
 import disnake
-import PropertiesReader
 import signal
+import whymightaGlobalVariables
 
-prop_reader = PropertiesReader.PropertiesReader()
 
 # Read in the names from file and store them in dictionary
 names = {}
-file = prop_reader.open("THE_LIST", 'r')
+file = whymightaGlobalVariables.prop_reader.open("THE_LIST", 'r')
 for line in file:
     line = line.replace("\n", "")
     names[line] = None
@@ -15,7 +14,7 @@ file.close()
 
 # On SIGINT, write all current names to file
 def signal_handler(sig, frame):
-    file = prop_reader.open("THE_LIST", "w")
+    file = whymightaGlobalVariables.prop_reader.open("THE_LIST", "w")
     for name in names:
         file.write(name + "\n")
     file.close()
@@ -64,20 +63,20 @@ class TheListHandler:
             # Before adding to the list, confirm message author is
             # allowed to add to the list, then add to the list
             if user_message[0].lower() == "add":
-                if message.author.id == prop_reader.get_user('NAME_ONE_ID'):
+                if message.author.id == whymightaGlobalVariables.prop_reader.get_user('NAME_ONE_ID'):
                     await self.list_add(user_message[1].title(), message.channel)
                 else:
-                    user = await self.bot.fetch_user(prop_reader.get_user('NAME_ONE_ID'))
+                    user = await self.bot.fetch_user(whymightaGlobalVariables.prop_reader.get_user('NAME_ONE_ID'))
                     await message.channel.send('Only {user} can access this command'
                                                .format(user=user))
 
             # Before removing from the list, confirm message author
             # is allowed to remove from the list, then remove from the list
             elif user_message[0].lower() == "remove":
-                if message.author.id == prop_reader.get_user('NAME_ONE_ID'):
+                if message.author.id == whymightaGlobalVariables.prop_reader.get_user('NAME_ONE_ID'):
                     await self.list_remove(user_message[1].title(), message.channel)
                 else:
-                    user = await self.bot.fetch_user(prop_reader.get_user('NAME_ONE_ID'))
+                    user = await self.bot.fetch_user(whymightaGlobalVariables.prop_reader.get_user('NAME_ONE_ID'))
                     await message.channel.send('Only {user} can access this command'
                                                .format(user=user))
             else:

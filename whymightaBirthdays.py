@@ -1,12 +1,9 @@
 import datetime
 import disnake
 import whymightaGlobalVariables
-import PropertiesReader
 
 from disnake.ext import tasks
 
-# Initialize reader for properties file
-prop_reader = PropertiesReader.PropertiesReader()
 
 # Midnight EST
 est = datetime.timezone(-datetime.timedelta(hours=5))
@@ -25,7 +22,7 @@ async def birthdayCheck():
         birthday_embed = disnake.Embed(title=":birthday: Happy Birthday Gamers! :birthday:", color=0x9534eb)
         birthday_embed.add_field(name="-" * 50, value="\n\n".join([f"{birthday_user}" for birthday_user in birthday_users]))
 
-        birthday_channel = whymightaGlobalVariables.bot.get_channel(int(prop_reader.get_key('BIRTHDAY_CHANNEL_KEY')))
+        birthday_channel = whymightaGlobalVariables.bot.get_channel(int(whymightaGlobalVariables.prop_reader.get_key('BIRTHDAY_CHANNEL_KEY')))
         await birthday_channel.send(embed=birthday_embed)
 
 @whymightaGlobalVariables.bot.slash_command(
@@ -96,7 +93,7 @@ def validateBirthday(date: str) -> bool:
 # Save birthdays to file every hour
 @tasks.loop(hours=1)
 async def saveBirthdays():
-    file = prop_reader.open('BIRTHDAYS', 'w')
+    file = whymightaGlobalVariables.prop_reader.open('BIRTHDAYS', 'w')
     for date in whymightaGlobalVariables.birthdate_user:
         user_ids = "; ".join([str(user_id) for user_id in whymightaGlobalVariables.birthdate_user[date]])
         file.write(f"{date}, {user_ids}\n")
@@ -108,7 +105,7 @@ async def saveBirthdays():
 
 # Load birthdays to dictionary from file
 def loadBirthdays():
-    file = prop_reader.open('BIRTHDAYS', 'r')
+    file = whymightaGlobalVariables.prop_reader.open('BIRTHDAYS', 'r')
     for date in file:
         user_birthday = date.replace('\n', "").split(', ')
         user_ids = user_birthday[1].split("; ")

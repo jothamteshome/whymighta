@@ -1,9 +1,7 @@
 import disnake
-import PropertiesReader
 import asyncpraw
 import asyncprawcore
-
-prop_reader = PropertiesReader.PropertiesReader()
+import whymightaGlobalVariables
 
 defaults = ('itswiggles_', 'hot', '', 5)
 
@@ -14,10 +12,10 @@ class RedditHandler:
 
     async def on_reddit(self, channel, sub=defaults[0], sort_by=defaults[1], top_sort=defaults[2], num_posts=defaults[3]):
         # Login to Reddit with asyncpraw
-        user = prop_reader.get_key('REDDIT_USERNAME')
-        password = prop_reader.get_key('REDDIT_PASSWORD')
-        app_id = prop_reader.get_key('REDDIT_APP_ID')
-        secret = prop_reader.get_key('REDDIT_APP_SECRET')
+        user = whymightaGlobalVariables.prop_reader.get_key('REDDIT_USERNAME')
+        password = whymightaGlobalVariables.prop_reader.get_key('REDDIT_PASSWORD')
+        app_id = whymightaGlobalVariables.prop_reader.get_key('REDDIT_APP_ID')
+        secret = whymightaGlobalVariables.prop_reader.get_key('REDDIT_APP_SECRET')
         user_agent = 'whymighta by u/' + user
         reddit = asyncpraw.Reddit(client_id=app_id, client_secret=secret,
                                   user_agent=user_agent, username=user, password=password)

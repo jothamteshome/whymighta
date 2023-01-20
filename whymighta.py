@@ -1,5 +1,4 @@
 import disnake
-import PropertiesReader
 import whymightaGlobalVariables
 import whymightaUtilities
 import whymightaHelp
@@ -11,11 +10,9 @@ from whymightaReddit import RedditHandler
 from whymightaTheList import TheListHandler
 
 
-# Initialize reader for properties file
-prop_reader = PropertiesReader.PropertiesReader()
 
 # Load bot token from a file
-TOKEN = prop_reader.get_key('DISCORD_TOKEN')
+TOKEN = whymightaGlobalVariables.prop_reader.get_key('DISCORD_TOKEN')
 
 @whymightaGlobalVariables.bot.event
 async def on_ready():

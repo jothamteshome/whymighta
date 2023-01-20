@@ -1,10 +1,7 @@
-import PropertiesReader
+import whymightaGlobalVariables
 
 from aiohttp import ClientSession
 
-import whymightaGlobalVariables
-
-prop_reader = PropertiesReader.PropertiesReader()
 
 @whymightaGlobalVariables.bot.slash_command(
     description="Check the weather in a specific city",
@@ -15,7 +12,7 @@ async def weather(inter, units: str, city: str, state_code: str = "", country_co
     if units.upper() in valid_units:
         units = valid_units[units.upper()]
         # OpenWeatherMap API key
-        weather_api = prop_reader.get_key('WEATHER_API_KEY')
+        weather_api = whymightaGlobalVariables.prop_reader.get_key('WEATHER_API_KEY')
 
         # Identifiers for the different temperature units
         temp_identifiers = {'imperial': "\u00B0F", 'metric': "\u00B0C", 'standard': "K"}
