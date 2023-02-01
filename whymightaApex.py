@@ -1,5 +1,7 @@
 import disnake
 import time
+
+import whymightaDatabase
 import whymightaGlobalVariables
 
 from aiohttp import ClientSession
@@ -17,7 +19,7 @@ class ApexHandler:
 
     async def populate_apex(self, channel, user, platform):
         # Apex Legends API Key
-        apex_api = whymightaGlobalVariables.prop_reader.get_key('APEX_API_KEY')
+        apex_api = whymightaDatabase.getKey('APEX_API_KEY')
 
         # Set flag for whether to save player information or not
         keep_info = False
@@ -136,7 +138,7 @@ class ApexHandler:
 
     async def apex_map(self, channel):
         # Get the Apex Legends API Key
-        api_key = whymightaGlobalVariables.prop_reader.get_key('APEX_API_KEY')
+        api_key = whymightaDatabase.getKey('APEX_API_KEY')
 
         # Create an embed to add map rotation data to
         embed = disnake.Embed(title="Map Rotation", description="-" * 50, color=0x9534eb)
