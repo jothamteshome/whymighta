@@ -41,7 +41,7 @@ def queryDatabase(statement="SELECT * FROM users", parameters=None):
 
 # Inserts multiple rows into the database
 # Code from Dr. Ghassemi's CSE 477 course at MSU
-def insertRows(table='table', columns=['x', 'y'], parameters=[['v11', 'v12'], ['v21', 'v22']]):
+def insertRows(table, columns, parameters):
     # Check if there are multiple rows present in the parameters
     has_multiple_rows = any(isinstance(el, list) for el in parameters)
     keys, values = ','.join(columns), ','.join(['%s' for x in columns])
@@ -73,8 +73,17 @@ def addUser(user_id, guild_id):
 
     whymightaGlobalVariables.guild_ids.append(guild_id)
 
-    insertRows('users', ['user_id', 'guild_id'],
-               [[user_id, guild_id]])
+    insertRows('users', ['user_id', 'guild_id', 'user_chat_score'],
+               [[user_id, guild_id, 0]])
+
+
+# Update's user's server score by amount
+def updateUserScore(user_id, guild_id, score_increase):
+    current_score = queryDatabase("SELECT `user_chat_score` FROM `users` WHERE `user_id` = %s AND `guild_id` = %s",
+                                  [user_id, guild_id])[0]['user_chat_score']
+
+    queryDatabase("UPDATE `users` SET `user_chat_score` = %s WHERE `user_id` = %s AND `guild_id` = %s",
+                  [current_score + score_increase, user_id, guild_id])
 
 
 # Adds encrypted user id and birthday to 'birthdays' table, or updates it if it exists
@@ -118,3 +127,24 @@ def reversibleEncrypt(method, message):
         message = fernet.decrypt(message).decode()
 
     return message
+
+
+# Toggles the mock status of the guild in the database
+def toggleMock(guild_id):
+    current_status = queryMock(guild_id)
+
+    if current_status:
+        queryDatabase("UPDATE `guilds` SET `mock` = %s WHERE `guild_id` = %s", [0, guild_id])
+        current_status = False
+    else:
+        queryDatabase("UPDATE `guilds` SET `mock` = %s WHERE `guild_id` = %s", [1, guild_id])
+        current_status = True
+
+    return current_status
+
+
+# Query's database for mocking status
+def queryMock(guild_id):
+    current_status = queryDatabase("SELECT `mock` FROM `guilds` WHERE `guild_id` = %s", [guild_id])[0]['mock']
+
+    return current_status

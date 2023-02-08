@@ -26,12 +26,16 @@ async def on_ready():
 async def on_message(message):
     channel = message.channel
     if message.author.bot is not True:
-        if message.content == whymightaGlobalVariables.bot.command_prefix:
-            await channel.send("Please check j!help for available functions")
-        if whymightaGlobalVariables.bot.command_prefix + "reddit" in message.content:
-            await RedditHandler(whymightaGlobalVariables.bot).on_reddit_message(message)
-        elif whymightaGlobalVariables.bot.command_prefix + "apex" in message.content:
-            await ApexHandler(whymightaGlobalVariables.bot).apex_message(message)
+        if whymightaDatabase.queryMock(message.guild.id):
+            if "http" in message.content.split("://")[0]:
+                await channel.send(message.content)
+            elif len(message.attachments) > 0:
+                if message.content != "":
+                    await channel.send(whymightaUtilities.sPoNgEbObCaSe(message.content))
+                for attachment in message.attachments:
+                    await channel.send(attachment)
+            else:
+                await channel.send(whymightaUtilities.sPoNgEbObCaSe(message.content))
 
 
 whymightaGlobalVariables.bot.run(TOKEN)
