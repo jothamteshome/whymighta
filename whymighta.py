@@ -24,18 +24,8 @@ async def on_ready():
 
 @whymightaGlobalVariables.bot.event
 async def on_message(message):
-    channel = message.channel
     if message.author.bot is not True:
-        if whymightaDatabase.queryMock(message.guild.id):
-            if "http" in message.content.split("://")[0]:
-                await channel.send(message.content)
-            elif len(message.attachments) > 0:
-                if message.content != "":
-                    await channel.send(whymightaUtilities.sPoNgEbObCaSe(message.content))
-                for attachment in message.attachments:
-                    await channel.send(attachment)
-            else:
-                await channel.send(whymightaUtilities.sPoNgEbObCaSe(message.content))
+        whymightaUtilities.mock_user(message)
 
 
 whymightaGlobalVariables.bot.run(TOKEN)
