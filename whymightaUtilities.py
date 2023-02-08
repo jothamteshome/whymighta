@@ -1,8 +1,11 @@
+import math
+
 import disnake
 import time
 
 import whymightaDatabase
 import whymightaGlobalVariables
+import whymightaSupportFunctions
 
 
 @whymightaGlobalVariables.bot.slash_command(
@@ -47,35 +50,21 @@ async def toggle_mock(inter):
         await inter.response.send_message("Mocking has been disabled")
 
 
-# Mocks a user's message by responding to it in "spongebob" case
-# after filtering out links and attachments
-def mock_user(message):
-    channel = message.channel
-    if whymightaDatabase.queryMock(message.guild.id):
-        if "http" in message.content.split("://")[0]:
-            await channel.send(message.content)
-        elif len(message.attachments) > 0:
-            if message.content != "":
-                await channel.send(sPoNgEbObCaSe(message.content))
-            for attachment in message.attachments:
-                await channel.send(attachment)
-        else:
-            await channel.send(sPoNgEbObCaSe(message.content))
+@whymightaGlobalVariables.bot.slash_command(
+    description="Checks the level of a user",
+    guild_ids=whymightaGlobalVariables.guild_ids)
+async def level(inter):
+    curr_xp = whymightaDatabase.currentUserScore(inter.author.id, inter.guild_id)
+    curr_level = whymightaSupportFunctions.check_level(curr_xp)
 
+    curr_level_split = str(curr_level).split(".")
 
-# Rewrites message in "Spongebob" case
-def sPoNgEbObCaSe(message):
-    mocking_message = ""
+    next_level_progress = int(round(curr_level - int(curr_level_split[0]), 2) * 100)
 
-    uppercase = False
+    progress_bar = math.floor(next_level_progress / 10)
 
-    for char in message:
-        if uppercase:
-            mocking_message += char.upper()
-            uppercase = False
+    embed = disnake.Embed(title=f"{inter.author.name}'s Level Progress", description="\n", color=0x9534eb)
+    embed.add_field(name=f"{next_level_progress}% to Level {int(curr_level_split[0]) + 1}",
+                    value=(progress_bar * "🔵") + ((10 - progress_bar) * "⚪"), inline=False)
 
-        else:
-            mocking_message += char.lower()
-            uppercase = True
-
-    return mocking_message
+    await inter.response.send_message(embed=embed)

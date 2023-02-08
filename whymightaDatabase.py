@@ -60,30 +60,38 @@ def insertRows(table, columns, parameters):
     return insert_id
 
 
-# Add encrypted guild id to 'guilds' table
-def addGuilds():
-    guild_ids = [[guild.id] for guild in whymightaGlobalVariables.bot.guilds]
+# Add guild id to 'guilds' table
+def addGuild(guild_id):
+    whymightaGlobalVariables.guild_ids.append(guild_id)
 
-    insertRows('guilds', ['guild_id'], guild_ids)
+    insertRows('guilds', ['guild_id'], [guild_id])
+
+
+# Removes guild id from `guilds` table
+def removeGuild(guild_id):
+    whymightaGlobalVariables.guild_ids.pop(whymightaGlobalVariables.guild_ids.index(guild_id))
+
+    queryDatabase("DELETE FROM `guilds` WHERE `guild_id` = %s", [guild_id])
 
 
 # Add encrypted user id and guild id to 'users' table
 def addUser(user_id, guild_id):
-    insertRows('guilds', ['guild_id'], [[guild_id]])
-
-    whymightaGlobalVariables.guild_ids.append(guild_id)
-
     insertRows('users', ['user_id', 'guild_id', 'user_chat_score'],
                [[user_id, guild_id, 0]])
 
 
-# Update's user's server score by amount
-def updateUserScore(user_id, guild_id, score_increase):
+# Check a users current chat score
+def currentUserScore(user_id, guild_id):
     current_score = queryDatabase("SELECT `user_chat_score` FROM `users` WHERE `user_id` = %s AND `guild_id` = %s",
                                   [user_id, guild_id])[0]['user_chat_score']
 
+    return int(current_score)
+
+
+# Update's user's server score by amount
+def updateUserScore(user_id, guild_id, increased_score):
     queryDatabase("UPDATE `users` SET `user_chat_score` = %s WHERE `user_id` = %s AND `guild_id` = %s",
-                  [current_score + score_increase, user_id, guild_id])
+                  [increased_score, user_id, guild_id])
 
 
 # Adds encrypted user id and birthday to 'birthdays' table, or updates it if it exists
