@@ -55,4 +55,14 @@ async def on_application_command(inter):
     await whymightaGlobalVariables.bot.process_application_commands(inter)
 
 
+@whymightaGlobalVariables.bot.event
+async def on_member_join(member):
+    whymightaDatabase.addUser(member.id, member.guild.id)
+
+
+@whymightaGlobalVariables.bot.event
+async def on_member_remove(member):
+    whymightaDatabase.removeUser(member.id, member.guild.id)
+
+
 whymightaGlobalVariables.bot.run(TOKEN)

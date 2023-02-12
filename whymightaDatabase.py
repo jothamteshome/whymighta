@@ -80,6 +80,11 @@ def addUser(user_id, guild_id):
                [[user_id, guild_id, 0]])
 
 
+# Remove user id and guild id from `users` table
+def removeUser(user_id, guild_id):
+    queryDatabase("DELETE FROM `users` WHERE `user_id` = %s AND `guild_id` = %s", [user_id, guild_id])
+
+
 # Check a users current chat score
 def currentUserScore(user_id, guild_id):
     current_score = queryDatabase("SELECT `user_chat_score` FROM `users` WHERE `user_id` = %s AND `guild_id` = %s",
