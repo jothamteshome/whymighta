@@ -31,7 +31,9 @@ async def on_message(message):
 
 @whymightaGlobalVariables.bot.event
 async def on_guild_join(guild):
+    member_ids = [member.id for member in guild.members if not member.bot]
     whymightaDatabase.addGuild(guild.id)
+    whymightaDatabase.addUsers(member_ids, guild.id)
 
 
 @whymightaGlobalVariables.bot.event

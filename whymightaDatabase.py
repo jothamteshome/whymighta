@@ -80,6 +80,12 @@ def addUser(user_id, guild_id):
                [[user_id, guild_id, 0]])
 
 
+# Adds multiple users at once
+def addUsers(user_ids, guild_id):
+    user_list = [[user_id, guild_id, 0] for user_id in user_ids]
+    insertRows('users', ['user_id', 'guild_id', 'user_chat_score'], user_list)
+
+
 # Remove user id and guild id from `users` table
 def removeUser(user_id, guild_id):
     queryDatabase("DELETE FROM `users` WHERE `user_id` = %s AND `guild_id` = %s", [user_id, guild_id])
