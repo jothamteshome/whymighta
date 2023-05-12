@@ -33,7 +33,7 @@ async def binarize_message(message):
 
 
 def binarizeMessage(message):
-    return ''.join(format(ord(char), '08b') for char in message)
+    return ' '.join(format(ord(char), '08b') for char in message)
 
 # Rewrites message in "Spongebob" case
 def sPoNgEbObCaSe(message):
