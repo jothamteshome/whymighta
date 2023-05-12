@@ -150,6 +150,8 @@ def reversibleEncrypt(method, message):
 
 # Toggles the mock status of the guild in the database
 def toggleMock(guild_id):
+    setTogglesOff(guild_id, 'mock')
+
     current_status = queryMock(guild_id)
 
     if current_status:
@@ -162,8 +164,38 @@ def toggleMock(guild_id):
     return current_status
 
 
+def toggleBinary(guild_id):
+    setTogglesOff(guild_id, 'binary')
+
+    current_status = queryBinary(guild_id)
+
+    if current_status:
+        queryDatabase("UPDATE `guilds` SET `binary` = %s WHERE `guild_id` = %s", [0, guild_id])
+        current_status = False
+    else:
+        queryDatabase("UPDATE `guilds` SET `binary` = %s WHERE `guild_id` = %s", [1, guild_id])
+        current_status = True
+
+    return current_status
+
+
+def setTogglesOff(guild_id, called_from):
+    toggle_columns = {"mock", "binary"}
+
+    toggle_columns.remove(called_from)
+
+    for col in toggle_columns:
+        queryDatabase(f"UPDATE `guilds` SET `{col}` = %s WHERE `guild_id` = %s", [0, guild_id])
+
+
 # Query's database for mocking status
 def queryMock(guild_id):
     current_status = queryDatabase("SELECT `mock` FROM `guilds` WHERE `guild_id` = %s", [guild_id])[0]['mock']
+
+    return current_status
+
+
+def queryBinary(guild_id):
+    current_status = queryDatabase("SELECT `binary` FROM `guilds` WHERE `guild_id` = %s", [guild_id])[0]['binary']
 
     return current_status

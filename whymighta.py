@@ -27,6 +27,7 @@ async def on_message(message):
     if message.author.bot is not True:
         await whymightaSupportFunctions.give_user_xp(message.guild.id, message.author.id, message)
         await whymightaSupportFunctions.mock_user(message)
+        await whymightaSupportFunctions.binarize_message(message)
 
 
 @whymightaGlobalVariables.bot.event

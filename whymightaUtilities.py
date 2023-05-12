@@ -51,6 +51,16 @@ async def toggle_mock(inter):
 
 
 @whymightaGlobalVariables.bot.slash_command(
+    description="Toggles the binary writing status of the bot",
+    guild_ids=whymightaGlobalVariables.guild_ids)
+async def toggle_binary(inter):
+    if whymightaDatabase.toggleBinary(inter.guild_id):
+        await inter.response.send_message("Binary has been enabled")
+    else:
+        await inter.response.send_message("Binary has been disabled")
+
+
+@whymightaGlobalVariables.bot.slash_command(
     description="Checks the level of a user",
     guild_ids=whymightaGlobalVariables.guild_ids)
 async def level(inter):

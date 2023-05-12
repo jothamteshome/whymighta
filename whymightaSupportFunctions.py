@@ -18,6 +18,23 @@ async def mock_user(message):
             await channel.send(sPoNgEbObCaSe(message.content))
 
 
+async def binarize_message(message):
+    channel = message.channel
+    if whymightaDatabase.queryBinary(message.guild.id):
+        if "http" in message.content.split("://")[0]:
+            await channel.send(message.content)
+        elif len(message.attachments) > 0:
+            if message.content != "":
+                await channel.send(binarizeMessage(message.content))
+            for attachment in message.attachments:
+                await channel.send(attachment)
+        else:
+            await channel.send(binarizeMessage(message.content))
+
+
+def binarizeMessage(message):
+    return ''.join(format(ord(char), '08b') for char in message)
+
 # Rewrites message in "Spongebob" case
 def sPoNgEbObCaSe(message):
     mocking_message = ""
