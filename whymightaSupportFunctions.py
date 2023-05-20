@@ -1,5 +1,10 @@
 import whymightaDatabase
 import math
+import io
+import disnake
+import requests
+
+from PIL import Image
 
 
 # Mocks a user's message by responding to it in "spongebob" case
@@ -81,3 +86,48 @@ def check_level(current_score):
     level = current_score ** (1/5)
 
     return level
+
+
+# Sends message informing number of messages cleared from channel
+async def clearMessage(inter, number):
+    if number == 1:
+        await inter.response.send_message(f"{inter.author} cleared {number} message from the channel")
+    else:
+        await inter.response.send_message(f"{inter.author} cleared {number} messages from the channel")
+
+
+# Takes in a server member and returns an image with them behind bars
+def imprisonMember(member):
+    # Max size for image
+    MAX_IMG_SIZE = 1024
+
+    # Get member avatar from Discord
+    avatar_url = member.display_avatar.url
+    response = requests.get(avatar_url)
+    avatar = Image.open(io.BytesIO(response.content))
+    avatar = avatar.convert("RGBA")
+
+    # Load Prison Bar image
+    prison_bars = Image.open("Resources/Images/prison_bars.png")
+
+    # Calculate proper cropping of prison bar image
+    prison_bar_mid = int(prison_bars.width / 2)
+    left = prison_bar_mid - int(MAX_IMG_SIZE / 2)
+    right = prison_bar_mid + int(MAX_IMG_SIZE / 2)
+    prison_bars = prison_bars.crop((left, 0, right, MAX_IMG_SIZE))
+
+    # Calculate proper resizing of prison bar image
+    width_ratio = avatar.width / prison_bars.width
+    height = int(prison_bars.height * width_ratio)
+    prison_bars = prison_bars.resize((avatar.width, height))
+
+    # Overlay prison bars over avatar
+    imprisoned_avatar = Image.alpha_composite(avatar, prison_bars)
+    imprisoned_avatar = Image.alpha_composite(imprisoned_avatar, prison_bars)
+
+    # Create a disnake file object using the image and return for sending
+    with io.BytesIO() as image_binary:
+        imprisoned_avatar.save(image_binary, 'PNG')
+        image_binary.seek(0)
+
+        return disnake.File(fp=image_binary, filename='image.png')

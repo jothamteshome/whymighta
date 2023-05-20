@@ -1,5 +1,4 @@
 import math
-
 import disnake
 import time
 
@@ -21,7 +20,6 @@ async def ping(inter):
     await inter.edit_original_response(embed=embed)
 
 
-# Only allow command if message author is an administrator to prevent trolling
 @whymightaGlobalVariables.bot.slash_command(
     description="Clear up to 100 messages from the current channel at once",
     guild_ids=whymightaGlobalVariables.guild_ids)
@@ -29,15 +27,8 @@ async def clear(inter, number: int = 5):
     if number < 1 or number > 100:
         await inter.response.send_message("Error clearing messages from channel")
     else:
-        await clearMessage(inter, number)
+        await whymightaSupportFunctions.clearMessage(inter, number)
         await inter.channel.purge(limit=number)
-
-
-async def clearMessage(inter, number):
-    if number == 1:
-        await inter.response.send_message(f"{inter.author} cleared {number} message from the channel")
-    else:
-        await inter.response.send_message(f"{inter.author} cleared {number} messages from the channel")
 
 
 @whymightaGlobalVariables.bot.slash_command(
@@ -78,3 +69,17 @@ async def level(inter):
                     value=(progress_bar * "🔵") + ((10 - progress_bar) * "⚪"), inline=False)
 
     await inter.response.send_message(embed=embed)
+
+
+@whymightaGlobalVariables.bot.slash_command(
+    description="Puts a deserving criminal behind bars",
+    guild_ids=whymightaGlobalVariables.guild_ids)
+async def jail(inter, name):
+    members = {member.name: member for member in inter.guild.members}
+
+    if name in members:
+        await inter.response.send_message("Generating Image...")
+        jailed_image = whymightaSupportFunctions.imprisonMember(members[name])
+        await inter.edit_original_response(content="", file=jailed_image)
+    else:
+        await inter.response.send_message("User does not exist. Please try again with the user's discord name")
