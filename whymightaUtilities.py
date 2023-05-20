@@ -76,10 +76,15 @@ async def level(inter):
     guild_ids=whymightaGlobalVariables.guild_ids)
 async def jail(inter, name):
     members = {member.name: member for member in inter.guild.members}
+    nicknames = {member.nick: member for member in inter.guild.members}
 
     if name in members:
         await inter.response.send_message("Generating Image...")
         jailed_image = whymightaSupportFunctions.imprisonMember(members[name])
+        await inter.edit_original_response(content="", file=jailed_image)
+    elif name in nicknames:
+        await inter.response.send_message("Generating Image...")
+        jailed_image = whymightaSupportFunctions.imprisonMember(nicknames[name])
         await inter.edit_original_response(content="", file=jailed_image)
     else:
         await inter.response.send_message("User does not exist. Please try again with the user's discord name")
