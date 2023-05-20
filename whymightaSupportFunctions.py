@@ -108,7 +108,7 @@ def imprisonMember(member):
     avatar = avatar.convert("RGBA")
 
     # Load Prison Bar image
-    prison_bars = Image.open("Resources/Images/prison_bars.png")
+    prison_bars = Image.open("Images/prison_bars.png")
 
     # Calculate proper cropping of prison bar image
     prison_bar_mid = int(prison_bars.width / 2)
