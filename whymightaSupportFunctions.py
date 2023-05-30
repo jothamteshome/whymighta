@@ -40,6 +40,7 @@ async def binarize_message(message):
 def binarizeMessage(message):
     return ' '.join(format(ord(char), '08b') for char in message)
 
+
 # Rewrites message in "Spongebob" case
 def sPoNgEbObCaSe(message):
     mocking_message = ""
@@ -59,17 +60,35 @@ def sPoNgEbObCaSe(message):
 
 
 # Give user xp based on message contents
-async def give_user_xp(guild_id, user_id, message):
+async def give_user_message_xp(message, catchingUp):
     mentions_xp = len(message.mentions) * 5
     attachments_xp = len(message.attachments) * 10
     content_xp = len(message.content)
 
-    prev_xp = whymightaDatabase.currentUserScore(user_id, guild_id)
+    prev_xp = whymightaDatabase.currentUserScore(message.author.id, message.guild.id)
     curr_xp = prev_xp + mentions_xp + attachments_xp + content_xp
 
-    await announce_level_up(prev_xp, curr_xp, message.author, message.channel)
+    if not catchingUp:
+        await announce_level_up(prev_xp, curr_xp, message.author, message.channel)
 
-    whymightaDatabase.updateUserScore(user_id, guild_id, curr_xp)
+    whymightaDatabase.updateUserScore(message.author.id, message.guild.id, curr_xp)
+    whymightaDatabase.updateLastMessageSent(message.guild.id, message.created_at)
+
+
+async def give_user_inter_xp(inter, catchingUp):
+    if inter.data.name != "level":
+        score = 5
+        for option in inter.options:
+            score += len(option)
+
+        prev_xp = whymightaDatabase.currentUserScore(inter.author.id, inter.guild_id)
+        curr_xp = prev_xp + score
+
+        if not catchingUp:
+            await announce_level_up(prev_xp, curr_xp, inter.author, inter.channel)
+
+        whymightaDatabase.updateUserScore(inter.author.id, inter.guild_id, curr_xp)
+        whymightaDatabase.updateLastMessageSent(inter.guild.id, inter.created_at)
 
 
 # Announce if a user has leveled up
@@ -131,3 +150,40 @@ def imprisonMember(member):
         image_binary.seek(0)
 
         return disnake.File(fp=image_binary, filename='image.png')
+
+
+async def serverMessageCatchUp(bot):
+    # Loop through all guilds the bot is a part of
+    for guild in bot.guilds:
+
+        # Retrieve the time of the last message the bot saw
+        last_server_message_time = whymightaDatabase.queryLastMessageSent(guild.id)
+
+        # Initialize the latest message time
+        latest_message_time = last_server_message_time
+
+        # Loop through all text channels in guild
+        for channel in guild.channels:
+            if type(channel) == disnake.TextChannel:
+                # Load messages sent after last seen message
+                new_messages = await channel.history(after=last_server_message_time, oldest_first=True).flatten()
+
+                # Give user xp for messages sent since bot was last online
+                for message in new_messages:
+                    if message.interaction is None:
+                        await give_user_message_xp(message, catchingUp=True)
+                    else:
+                        await give_user_inter_xp(message.interaction, catchingUp=True)
+
+                # Store the latest message sent in the channel
+                latest_channel_message = new_messages.pop() if len(new_messages) > 0 else None
+
+                # Save the current channel's latest message time if it is
+                # more recent than the previous most recent message
+                if latest_channel_message is not None and latest_message_time < latest_channel_message.created_at:
+                    latest_message_time = latest_channel_message.created_at
+
+        # Update guild's latest message time to be the most recent of all messages in guild
+        whymightaDatabase.updateLastMessageSent(guild.id, latest_message_time)
+
+

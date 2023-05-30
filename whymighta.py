@@ -19,13 +19,15 @@ async def on_ready():
     whymightaBirthdays.birthdayCheck.start()
     whymightaGlobalVariables.guild_ids = [int(guild['guild_id'])
                                           for guild in whymightaDatabase.queryDatabase("SELECT guild_id FROM guilds")]
+
+    await whymightaSupportFunctions.serverMessageCatchUp(whymightaGlobalVariables.bot)
     print("Logged in as {0.user}".format(whymightaGlobalVariables.bot))
 
 
 @whymightaGlobalVariables.bot.event
 async def on_message(message):
     if message.author.bot is not True:
-        await whymightaSupportFunctions.give_user_xp(message.guild.id, message.author.id, message)
+        await whymightaSupportFunctions.give_user_message_xp(message, catchingUp=False)
         await whymightaSupportFunctions.mock_user(message)
         await whymightaSupportFunctions.binarize_message(message)
 
@@ -44,17 +46,7 @@ async def on_guild_remove(guild):
 
 @whymightaGlobalVariables.bot.event
 async def on_application_command(inter):
-    if inter.data.name != "level":
-        score = 5
-        for option in inter.options:
-            score += len(option)
-
-        prev_xp = whymightaDatabase.currentUserScore(inter.author.id, inter.guild_id)
-        curr_xp = prev_xp + score
-
-        await whymightaSupportFunctions.announce_level_up(prev_xp, curr_xp, inter.author, inter.channel)
-
-        whymightaDatabase.updateUserScore(inter.author.id, inter.guild_id, curr_xp)
+    await whymightaSupportFunctions.give_user_inter_xp(inter, catchingUp=False)
     await whymightaGlobalVariables.bot.process_application_commands(inter)
 
 

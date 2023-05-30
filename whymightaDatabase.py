@@ -2,6 +2,7 @@ import mysql.connector
 import itertools
 import whymightaGlobalVariables
 import PropertiesReader
+import datetime
 
 from cryptography.fernet import Fernet
 
@@ -188,6 +189,11 @@ def setTogglesOff(guild_id, called_from):
         queryDatabase(f"UPDATE `guilds` SET `{col}` = %s WHERE `guild_id` = %s", [0, guild_id])
 
 
+def updateLastMessageSent(guild_id, updated_time):
+    queryDatabase("UPDATE `guilds` SET `last_message_sent` = %s WHERE `guild_id` = %s",
+                  [updated_time, guild_id])
+
+
 # Query's database for mocking status
 def queryMock(guild_id):
     current_status = queryDatabase("SELECT `mock` FROM `guilds` WHERE `guild_id` = %s", [guild_id])[0]['mock']
@@ -199,3 +205,10 @@ def queryBinary(guild_id):
     current_status = queryDatabase("SELECT `binary` FROM `guilds` WHERE `guild_id` = %s", [guild_id])[0]['binary']
 
     return current_status
+
+
+def queryLastMessageSent(guild_id):
+    message_sent = queryDatabase("SELECT `last_message_sent` FROM `guilds` WHERE `guild_id` = %s",
+                                 [guild_id])[0]['last_message_sent']
+
+    return message_sent.replace(tzinfo=datetime.timezone.utc)
