@@ -171,7 +171,8 @@ async def serverMessageCatchUp(bot):
                 # Give user xp for messages sent since bot was last online
                 for message in new_messages:
                     if message.interaction is None:
-                        await give_user_message_xp(message, catchingUp=True)
+                        if not message.author.bot:
+                            await give_user_message_xp(message, catchingUp=True)
                     else:
                         await give_user_inter_xp(message.interaction, catchingUp=True)
 
