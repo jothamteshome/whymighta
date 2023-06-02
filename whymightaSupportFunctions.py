@@ -1,8 +1,9 @@
-import whymightaDatabase
-import math
-import io
 import disnake
+import io
+import math
 import requests
+import random
+import whymightaDatabase
 
 from PIL import Image
 
@@ -186,5 +187,21 @@ async def serverMessageCatchUp(bot):
 
         # Update guild's latest message time to be the most recent of all messages in guild
         whymightaDatabase.updateLastMessageSent(guild.id, latest_message_time)
+
+
+# Replaces the tokens in a chatbot reply
+def replaceTokens(token, tokenCount, tokenGuildList, author, reply):
+    if tokenCount < 2:
+        tokenReplaceList = [author.mention]
+    else:
+        tokenReplaceList = [author.mention]
+        token_replace_weights = [1 if member is not author else 2 for member in tokenGuildList]
+        selected_mentions = random.choices(tokenGuildList, token_replace_weights, k=tokenCount - 1)
+        tokenReplaceList.extend(selected_mentions)
+
+    for i in range(tokenCount):
+        reply = reply.replace(token, tokenReplaceList[i], 1)
+
+    return reply
 
 
