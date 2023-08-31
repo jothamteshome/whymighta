@@ -22,6 +22,7 @@ async def on_ready():
     whymightaGlobalVariables.guild_ids = [int(guild['guild_id'])
                                           for guild in whymightaDatabase.queryDatabase("SELECT guild_id FROM guilds")]
 
+    await whymightaSupportFunctions.updateNewMembers(whymightaGlobalVariables.bot)
     await whymightaSupportFunctions.serverMessageCatchUp(whymightaGlobalVariables.bot)
     print("Logged in as {0.user}".format(whymightaGlobalVariables.bot))
 

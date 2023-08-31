@@ -189,6 +189,15 @@ async def serverMessageCatchUp(bot):
         whymightaDatabase.updateLastMessageSent(guild.id, latest_message_time)
 
 
+async def updateNewMembers(bot):
+    # Loop through all guilds bot is a part of
+    for guild in bot.guilds:
+        # Add all users that joined while the bot was offline
+        member_ids = [member.id for member in guild.members if not member.bot]
+        whymightaDatabase.addGuild(guild.id)
+        whymightaDatabase.addUsers(member_ids, guild.id)
+
+
 # Replaces the tokens in a chatbot reply
 def replaceTokens(token, tokenCount, tokenGuildList, author, reply):
     if tokenCount < 2:
