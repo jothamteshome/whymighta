@@ -1,12 +1,12 @@
 import mysql.connector
 import itertools
 import whymightaGlobalVariables
-import PropertiesReader
+import HelperFiles.PropertiesReader
 import datetime
 
 from cryptography.fernet import Fernet
 
-prop_reader = PropertiesReader.PropertiesReader()
+prop_reader = HelperFiles.PropertiesReader.PropertiesReader()
 
 
 # Query's the database
