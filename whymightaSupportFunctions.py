@@ -174,8 +174,6 @@ async def serverMessageCatchUp(bot):
                     if message.interaction is None:
                         if not message.author.bot:
                             await give_user_message_xp(message, catchingUp=True)
-                    else:
-                        await give_user_inter_xp(message.interaction, catchingUp=True)
 
                 # Store the latest message sent in the channel
                 latest_channel_message = new_messages.pop() if len(new_messages) > 0 else None
