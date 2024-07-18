@@ -1,3 +1,6 @@
-Pillow
-transformers
+asyncpraw
+cryptography
+mysql-connector-python
+pillow
 torch
+transformers
