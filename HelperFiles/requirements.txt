@@ -1,5 +1,6 @@
 asyncpraw
 cryptography
+disnake
 mysql-connector-python
 pillow
 torch
