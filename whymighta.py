@@ -11,9 +11,6 @@ import whymightaOpenWeatherMap
 import whymightaBirthdays
 import whymightaFortnite
 
-from whymightaApex import ApexHandler
-from whymightaReddit import RedditHandler
-
 # Retrieve bot token from database
 TOKEN = whymightaDatabase.getKey('DISCORD_TOKEN')
 
