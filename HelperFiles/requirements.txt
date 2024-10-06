@@ -1,8 +1,5 @@
-asyncpraw
 cryptography
 disnake
 mysql-connector-python
 pillow
-numpy<2
-torch
-transformers
+requests
