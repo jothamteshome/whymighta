@@ -8,6 +8,7 @@ import whymightaUtilities
 import whymightaHelp
 import whymightaOpenWeatherMap
 import whymightaBirthdays
+import whymightaFortnite
 
 from whymightaApex import ApexHandler
 from whymightaReddit import RedditHandler
