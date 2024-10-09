@@ -2,4 +2,5 @@ cryptography
 disnake
 mysql-connector-python
 pillow
+pynacl
 requests
