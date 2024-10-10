@@ -30,8 +30,7 @@ async def birthdayCheck():
 
 
 @whymightaGlobalVariables.bot.slash_command(
-    description="Add or remove your birthday to receive a message from whymighta!",
-    guild_ids=whymightaGlobalVariables.guild_ids)
+    description="Add or remove your birthday to receive a message from whymighta!")
 async def birthday(inter, add_remove: str, date: str = ""):
     if add_remove.lower() == "add":
         if birthday == "":

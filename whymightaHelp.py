@@ -2,8 +2,7 @@ import disnake
 import whymightaGlobalVariables
 
 @whymightaGlobalVariables.bot.slash_command(
-    description="Descriptions of bot commands",
-    guild_ids=whymightaGlobalVariables.guild_ids)
+    description="Descriptions of bot commands")
 async def commands(inter, command: str = "", subcommand: str = ""):
     embed = None
     if command == "":

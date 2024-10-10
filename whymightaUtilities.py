@@ -8,8 +8,7 @@ import whymightaSupportFunctions
 
 
 @whymightaGlobalVariables.bot.slash_command(
-    description="Check the latency of the whymighta",
-    guild_ids=whymightaGlobalVariables.guild_ids)
+    description="Check the latency of the whymighta")
 async def ping(inter):
     before = time.monotonic()
     embed = disnake.Embed(title=":information_source: | Pong!", description="\n", color=0x9534eb)
@@ -21,8 +20,7 @@ async def ping(inter):
 
 
 @whymightaGlobalVariables.bot.slash_command(
-    description="Clear up to 100 messages from the current channel at once",
-    guild_ids=whymightaGlobalVariables.guild_ids)
+    description="Clear up to 100 messages from the current channel at once")
 async def clear(inter, number: int = 5):
     if number < 1 or number > 100:
         await inter.response.send_message("Error clearing messages from channel")
@@ -32,8 +30,7 @@ async def clear(inter, number: int = 5):
 
 
 @whymightaGlobalVariables.bot.slash_command(
-    description="Toggles the mock status of the bot",
-    guild_ids=whymightaGlobalVariables.guild_ids)
+    description="Toggles the mock status of the bot")
 async def toggle_mock(inter):
     if whymightaDatabase.toggleMock(inter.guild_id):
         await inter.response.send_message("Mocking has been enabled")
@@ -42,8 +39,7 @@ async def toggle_mock(inter):
 
 
 @whymightaGlobalVariables.bot.slash_command(
-    description="Toggles the binary writing status of the bot",
-    guild_ids=whymightaGlobalVariables.guild_ids)
+    description="Toggles the binary writing status of the bot")
 async def toggle_binary(inter):
     if whymightaDatabase.toggleBinary(inter.guild_id):
         await inter.response.send_message("Binary has been enabled")
@@ -52,8 +48,7 @@ async def toggle_binary(inter):
 
 
 @whymightaGlobalVariables.bot.slash_command(
-    description="Checks the level of a user",
-    guild_ids=whymightaGlobalVariables.guild_ids)
+    description="Checks the level of a user")
 async def level(inter):
     curr_xp = whymightaDatabase.currentUserScore(inter.author.id, inter.guild_id)
     curr_level = whymightaSupportFunctions.check_level(curr_xp)
@@ -72,8 +67,7 @@ async def level(inter):
 
 
 @whymightaGlobalVariables.bot.slash_command(
-    description="Puts a deserving criminal behind bars",
-    guild_ids=whymightaGlobalVariables.guild_ids)
+    description="Puts a deserving criminal behind bars")
 async def jail(inter, name):
     members = {member.name: member for member in inter.guild.members}
     nicknames = {member.nick: member for member in inter.guild.members}

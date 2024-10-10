@@ -63,15 +63,11 @@ def insertRows(table, columns, parameters):
 
 # Add guild id to 'guilds' table
 def addGuild(guild_id):
-    whymightaGlobalVariables.guild_ids.append(guild_id)
-
     insertRows('guilds', ['guild_id'], [guild_id])
 
 
 # Removes guild id from `guilds` table
 def removeGuild(guild_id):
-    whymightaGlobalVariables.guild_ids.pop(whymightaGlobalVariables.guild_ids.index(guild_id))
-
     queryDatabase("DELETE FROM `guilds` WHERE `guild_id` = %s", [guild_id])
 
 

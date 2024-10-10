@@ -20,8 +20,6 @@ TOKEN = whymightaDatabase.getKey('DISCORD_TOKEN')
 @whymightaGlobalVariables.bot.event
 async def on_ready():
     whymightaBirthdays.birthdayCheck.start()
-    whymightaGlobalVariables.guild_ids = [int(guild['guild_id'])
-                                          for guild in whymightaDatabase.queryDatabase("SELECT guild_id FROM guilds")]
 
     await whymightaSupportFunctions.updateNewMembers(whymightaGlobalVariables.bot)
     await whymightaSupportFunctions.serverMessageCatchUp(whymightaGlobalVariables.bot)

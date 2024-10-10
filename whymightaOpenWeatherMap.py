@@ -5,8 +5,7 @@ from aiohttp import ClientSession
 
 
 @whymightaGlobalVariables.bot.slash_command(
-    description="Check the weather in a specific city",
-    guild_ids=whymightaGlobalVariables.guild_ids)
+    description="Check the weather in a specific city")
 async def weather(inter, units: str, city: str, state_code: str = "", country_code: str = ""):
     valid_units = {"F": 'imperial', "C": 'metric', "K": 'standard'}
 
