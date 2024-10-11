@@ -62,8 +62,8 @@ def insertRows(table, columns, parameters):
 
 
 # Add guild id to 'guilds' table
-def addGuild(guild_id):
-    insertRows('guilds', ['guild_id'], [guild_id])
+def addGuild(guild_id, default_channel_id):
+    insertRows('guilds', ['guild_id', 'bot_channel_id'], [guild_id, default_channel_id])
 
 
 # Removes guild id from `guilds` table
