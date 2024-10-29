@@ -4,6 +4,7 @@ import whymightaChatBot
 import whymightaDatabase
 import whymightaGlobalVariables
 import whymightaSupportFunctions
+import whymightaServerManagement
 import whymightaUtilities
 import whymightaHelp
 import whymightaOpenWeatherMap
@@ -40,12 +41,7 @@ async def on_message(message):
 async def on_guild_join(guild):
     member_ids = [member.id for member in guild.members if not member.bot]
     
-    default_text_channel = None
-
-    if guild.text_channels:
-        default_text_channel = guild.text_channels[0].id
-
-    whymightaDatabase.addGuild(guild.id, default_text_channel)
+    whymightaDatabase.addGuild(guild.id, whymightaSupportFunctions.defaultGuildTextChannel(guild))
     whymightaDatabase.addUsers(member_ids, guild.id)
 
 
@@ -69,5 +65,12 @@ async def on_member_join(member):
 async def on_member_remove(member):
     whymightaDatabase.removeUser(member.id, member.guild.id)
 
+
+@whymightaGlobalVariables.bot.event
+async def on_guild_channel_delete(channel):
+    bot_text_channel = whymightaDatabase.getBotTextChannel(channel.guild.id)
+
+    if channel.id == bot_text_channel:
+        whymightaDatabase.setBotTextChannel(whymightaSupportFunctions.defaultGuildTextChannel(channel.guild))
 
 whymightaGlobalVariables.bot.run(TOKEN)

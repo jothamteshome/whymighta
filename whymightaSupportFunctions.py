@@ -193,12 +193,7 @@ async def updateNewMembers(bot):
         # Add all users that joined while the bot was offline
         member_ids = [member.id for member in guild.members if not member.bot]
 
-        default_text_channel = None
-
-        if guild.text_channels:
-            default_text_channel = guild.text_channels[0].id
-
-        whymightaDatabase.addGuild(guild.id, default_text_channel)
+        whymightaDatabase.addGuild(guild.id, defaultGuildTextChannel(guild))
         whymightaDatabase.addUsers(member_ids, guild.id)
 
 
@@ -216,3 +211,16 @@ def replaceTokens(token, tokenCount, tokenGuildList, author, reply):
         reply = reply.replace(token, tokenReplaceList[i], 1)
 
     return reply
+
+
+def checkAdmin(author):
+    return author.top_role.permissions.administrator or author.guild.owner == author
+
+
+def defaultGuildTextChannel(guild):
+    default_text_channel = None
+
+    if guild.text_channels:
+        default_text_channel = guild.text_channels[0].id
+
+    return default_text_channel
