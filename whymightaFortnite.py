@@ -24,9 +24,15 @@ def selectLocation(locations):
     return random.choice(locations)['name'].title()
 
 
-@whymightaGlobalVariables.bot.slash_command(
+@whymightaGlobalVariables.bot.slash_command()
+async def fortnite(inter):
+    pass
+
+
+
+@fortnite.sub_command(
     description="Select a random drop location in Fortnite")
-async def fortnite_drop(inter):
+async def drop(inter):
     named_drops = parseNamedLocations()
 
     await inter.response.send_message(f"You should drop at {selectLocation(named_drops)}!")

@@ -29,33 +29,38 @@ async def birthdayCheck():
         await birthday_channel.send(embed=birthday_embed)
 
 
-@whymightaGlobalVariables.bot.slash_command(
-    description="Add or remove your birthday to receive a message from whymighta!")
-async def birthday(inter, add_remove: str, date: str = ""):
-    if add_remove.lower() == "add":
-        if birthday == "":
-            await inter.response.send_message("Please include a birthdate in the form of YYYY-MM-DD")
-        else:
-            # Check if birthday is a valid date
-            if validateBirthday(date):
-                formatted_date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
-                whymightaDatabase.addUser(inter.author.id, inter.guild_id)
-                whymightaDatabase.addBirthday(inter.author.id, formatted_date)
+@whymightaGlobalVariables.bot.slash_command()
+async def birthday(inter):
+    pass
 
-                await inter.response.send_message(f"{inter.author.mention}, your birthday has been added.")
-            else:
-                await inter.response.send_message(
-                    "There was an error processing that date. Please input a birthdate in the form YYYY-MM-DD")
 
-    elif add_remove.lower() == "remove":
-        if not whymightaDatabase.removeBirthday(inter.author.id):
-            await inter.response.send_message(f"{inter.author.mention}, your birthday was not in the records. "
-                                              f"You can add it now using the `add` subcommand.")
-        else:
-            await inter.response.send_message(f"{inter.author.mention}, your birthday has been removed.")
-
+@birthday.sub_command(
+        description="Add birthday to recieve message from whymighta"
+)
+async def add(inter, date: str = ""):
+    if birthday == "":
+        await inter.response.send_message("Please include a birthdate in the form of YYYY-MM-DD")
     else:
-        await inter.response.send_message("Subcommand not available. Please use 'add' or 'remove' only.")
+        # Check if birthday is a valid date
+        if validateBirthday(date):
+            formatted_date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
+            whymightaDatabase.addUser(inter.author.id, inter.guild_id)
+            whymightaDatabase.addBirthday(inter.author.id, formatted_date)
+
+            await inter.response.send_message(f"{inter.author.mention}, your birthday has been added.")
+        else:
+            await inter.response.send_message(
+                "There was an error processing that date. Please input a birthdate in the form YYYY-MM-DD")
+            
+
+@birthday.sub_command(
+        description="Remove your birthday from whymighta"
+)
+async def remove(inter):
+    if not whymightaDatabase.removeBirthday(inter.author.id):
+        await inter.response.send_message(f"{inter.author.mention}, your birthday was not in the records.")
+    else:
+        await inter.response.send_message(f"{inter.author.mention}, your birthday has been removed.")
 
 
 # Validate if a birthday is valid in a calendar year
