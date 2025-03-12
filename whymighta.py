@@ -62,9 +62,9 @@ async def on_member_remove(member):
 
 @whymightaGlobalVariables.bot.event
 async def on_guild_channel_delete(channel):
-    bot_text_channel = whymightaDatabase.getBotTextChannel(channel.guild.id)
+    bot_text_channel_id = whymightaDatabase.getBotTextChannelID(channel.guild.id)
 
-    if channel.id == bot_text_channel:
-        whymightaDatabase.setBotTextChannel(whymightaSupportFunctions.defaultGuildTextChannel(channel.guild))
+    if channel.id == bot_text_channel_id:
+        whymightaDatabase.setBotTextChannelID(whymightaSupportFunctions.defaultGuildTextChannel(channel.guild))
 
 whymightaGlobalVariables.bot.run(TOKEN)

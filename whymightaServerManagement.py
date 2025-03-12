@@ -25,7 +25,7 @@ async def bot_channel(inter):
 async def set(inter):
     await inter.response.defer()    
 
-    whymightaDatabase.setBotTextChannel(inter.guild.id, inter.channel.id)
+    whymightaDatabase.setBotTextChannelID(inter.guild.id, inter.channel.id)
 
     await inter.edit_original_message(f"Bot messages will now appear in {inter.channel.name}!")
 
@@ -37,7 +37,7 @@ async def get(inter):
     await inter.response.defer()
     
 
-    bot_channel_id = whymightaDatabase.getBotTextChannel(inter.guild.id)
+    bot_channel_id = whymightaDatabase.getBotTextChannelID(inter.guild.id)
     bot_channel = None
 
 

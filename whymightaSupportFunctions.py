@@ -4,6 +4,7 @@ import math
 import requests
 import random
 import whymightaDatabase
+import whymightaGlobalVariables
 
 from PIL import Image
 
@@ -98,7 +99,14 @@ async def announce_level_up(previous_xp, current_xp, user, text_channel):
     curr_level = check_level(current_xp)
 
     if math.floor(curr_level) > math.floor(prev_level):
-        await text_channel.send(f"Congratulations {user.mention}! You've reached Level {math.floor(curr_level)}!")
+        bot_channel_id = whymightaDatabase.getBotTextChannelID(text_channel.guild.id)
+
+        if not bot_channel_id:
+            await text_channel.send(f"Congratulations {user.mention}! You've reached Level {math.floor(curr_level)}!")
+        else:
+            bot_channel = whymightaGlobalVariables.bot.get_channel(bot_channel_id)
+
+            await bot_channel.send(f"Congratulations {user.mention}! You've reached Level {math.floor(curr_level)}!")
 
 
 # Checks the level of a user based on their exp accrued

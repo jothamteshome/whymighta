@@ -210,11 +210,15 @@ def queryLastMessageSent(guild_id):
     return message_sent.replace(tzinfo=datetime.timezone.utc)
 
 
-def getBotTextChannel(guild_id):
-    channel_id = queryDatabase("SELECT `bot_channel_id` FROM `guilds` WHERE `guild_id` = %s", [guild_id])[0]['bot_channel_id']
+def getBotTextChannelID(guild_id):
+    channel_id = queryDatabase("SELECT `bot_channel_id` FROM `guilds` WHERE `guild_id` = %s", [guild_id])
 
-    return int(channel_id)
+    # If channel id doesn't exist, return None
+    if not channel_id:
+        return None
+    
+    return int(channel_id[0]['bot_channel_id'])
 
 
-def setBotTextChannel(guild_id, channel_id):
+def setBotTextChannelID(guild_id, channel_id):
     queryDatabase("UPDATE `guilds` SET `bot_channel_id` = %s WHERE `guild_id` = %s;", [channel_id, guild_id])
