@@ -5,6 +5,7 @@ import requests
 import random
 import whymightaDatabase
 import whymightaGlobalVariables
+import hashlib
 
 from PIL import Image
 
@@ -232,3 +233,7 @@ def defaultGuildTextChannel(guild):
         default_text_channel = guild.text_channels[0].id
 
     return default_text_channel
+
+
+def md5_hash(unhashed_string):
+    return hashlib.md5(unhashed_string.encode('utf-8')).hexdigest()

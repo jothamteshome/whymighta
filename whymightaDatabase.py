@@ -5,6 +5,7 @@ import HelperFiles.PropertiesReader
 import datetime
 
 from cryptography.fernet import Fernet
+from whymightaSupportFunctions import md5_hash
 
 prop_reader = HelperFiles.PropertiesReader.PropertiesReader()
 
@@ -222,3 +223,23 @@ def getBotTextChannelID(guild_id):
 
 def setBotTextChannelID(guild_id, channel_id):
     queryDatabase("UPDATE `guilds` SET `bot_channel_id` = %s WHERE `guild_id` = %s;", [channel_id, guild_id])
+
+
+def getGameFromList(guild_id, game_name):
+    game = queryDatabase("SELECT `game_name` FROM `games` WHERE `guild_id` = %s AND `game_hash` = %s", [guild_id, md5_hash(game_name.lower())])
+
+    return game
+
+
+def getAllGamesFromList(guild_id):
+    game_list = queryDatabase("SELECT `game_name` FROM `games` WHERE `guild_id` = %s", [guild_id])
+
+    return game_list
+
+
+def addGameToList(guild_id, game_name):
+    insertRows('games', ['guild_id', 'game_name', 'game_hash'], [[guild_id, game_name, md5_hash(game_name.lower())]])
+
+
+def removeGameFromList(guild_id, game_name):
+    queryDatabase('DELETE FROM `games` WHERE `guild_id` = %s AND `game_hash` = %s ', [guild_id, md5_hash(game_name.lower())])

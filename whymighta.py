@@ -9,6 +9,7 @@ import whymightaHelp
 import whymightaOpenWeatherMap
 import whymightaBirthdays
 import whymightaFortnite
+import whymightaGames
 
 # Retrieve bot token from database
 TOKEN = whymightaDatabase.getKey('DISCORD_TOKEN')
