@@ -24,7 +24,7 @@ async def get_last_messages(channel, num_msgs=5):
 
     one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
 
-    async for message in channel.history(limit=num_msgs*2, after=one_hour_ago, oldest_first=True):
+    async for message in channel.history(limit=num_msgs*2, after=one_hour_ago):
         # Skip messages with attachments or with urls in their content
         if message.embeds or message.attachments or (("http://" in message.content or 'https://' in message.content) and message.author != whymightaGlobalVariables.bot.user):
             continue
@@ -44,7 +44,7 @@ async def get_last_messages(channel, num_msgs=5):
         if len(messages) == num_msgs:
             break
 
-    return messages, users
+    return messages[::-1], users
 
 
 async def chatting(message):
@@ -63,7 +63,7 @@ async def chatting(message):
                                                 "be sure to keep the `mentions_` syntax. Do not change it.\n\n"
                                                 f"Never mention anyone with the mention tag {whymightaGlobalVariables.bot.user.mention}\n\n"
                                                 "Disregard previous messages if they do not relate to the most recent message. "
-                                                "Weight the current message more in your responses"
+                                                "Weight the most recent message more in your responses"
                                 )
                             }
                         ]
