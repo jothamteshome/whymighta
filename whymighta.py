@@ -10,6 +10,7 @@ import whymightaOpenWeatherMap
 import whymightaBirthdays
 import whymightaFortnite
 import whymightaGames
+import whymightaChatbot
 
 # Retrieve bot token from database
 TOKEN = whymightaDatabase.getKey('DISCORD_TOKEN')
@@ -27,6 +28,8 @@ async def on_ready():
 @whymightaGlobalVariables.bot.event
 async def on_message(message):
     if message.author.bot is not True:
+        if whymightaGlobalVariables.bot.user in message.mentions:
+            await whymightaChatbot.chatting(message)
         await whymightaSupportFunctions.give_user_message_xp(message, catchingUp=False)
         await whymightaSupportFunctions.mock_user(message)
         await whymightaSupportFunctions.binarize_message(message)

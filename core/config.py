@@ -12,4 +12,6 @@ class Config:
         self.MYSQL_DATABASE = os.getenv('MYSQL_DATABASE')
         self.ENCRYPTION_KEY = os.getenv('ENCRYPTION_KEY')
 
+        self.AWS_CHATGPT_API_URL = os.getenv('AWS_CHATGPT_API_URL')
+
 config = Config()
