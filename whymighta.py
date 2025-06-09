@@ -7,19 +7,18 @@ import whymightaServerManagement
 import whymightaUtilities
 import whymightaHelp
 import whymightaOpenWeatherMap
-import whymightaBirthdays
 import whymightaFortnite
 import whymightaGames
 import whymightaChatbot
 
+from core.config import config
+
 # Retrieve bot token from database
-TOKEN = whymightaDatabase.getKey('DISCORD_TOKEN')
+TOKEN = config.DISCORD_TOKEN
 
 
 @whymightaGlobalVariables.bot.event
 async def on_ready():
-    whymightaBirthdays.birthdayCheck.start()
-
     await whymightaSupportFunctions.updateNewMembers(whymightaGlobalVariables.bot)
     await whymightaSupportFunctions.serverMessageCatchUp(whymightaGlobalVariables.bot)
     print("Logged in as {0.user}".format(whymightaGlobalVariables.bot))

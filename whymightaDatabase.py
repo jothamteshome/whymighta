@@ -126,11 +126,6 @@ def getBirthdayUsers(month, day):
     return [{'user_id': int(user['user_id'])} for user in birthday_users]
 
 
-def getKey(identifier):
-    encrypted_key = queryDatabase('SELECT `key` FROM `keys` WHERE `key_identifier` = %s', [identifier])[0]['key']
-    return reversibleEncrypt('decrypt', encrypted_key)
-
-
 # Allows for reversible encryption of data
 # Code from Dr. Ghassemi's CSE 477 course at MSU
 def reversibleEncrypt(method, message):

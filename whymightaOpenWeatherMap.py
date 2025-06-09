@@ -2,6 +2,7 @@ import whymightaDatabase
 import whymightaGlobalVariables
 
 from aiohttp import ClientSession
+from core.config import config
 
 
 @whymightaGlobalVariables.bot.slash_command(
@@ -12,7 +13,7 @@ async def weather(inter, units: str, city: str, state_code: str = "", country_co
     if units.upper() in valid_units:
         units = valid_units[units.upper()]
         # OpenWeatherMap API key
-        weather_api = whymightaDatabase.getKey('WEATHER_API_KEY')
+        weather_api = config.WEATHER_API_KEY
 
         # Identifiers for the different temperature units
         temp_identifiers = {'imperial': "\u00B0F", 'metric': "\u00B0C", 'standard': "K"}

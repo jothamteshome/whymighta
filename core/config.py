@@ -14,4 +14,8 @@ class Config:
 
         self.AWS_CHATGPT_API_URL = os.getenv('AWS_CHATGPT_API_URL')
 
+        self.WEATHER_API_KEY = os.getenv('WEATHER_API_KEY')
+
+        self.DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
+
 config = Config()
