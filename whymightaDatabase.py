@@ -1,24 +1,22 @@
 import mysql.connector
 import itertools
 import whymightaGlobalVariables
-import HelperFiles.PropertiesReader
+from core.config import config
 import datetime
 
 from cryptography.fernet import Fernet
 from whymightaSupportFunctions import md5_hash
-
-prop_reader = HelperFiles.PropertiesReader.PropertiesReader()
 
 
 # Query's the database
 # Code from Dr. Ghassemi's CSE 477 course at MSU
 def queryDatabase(statement="SELECT * FROM users", parameters=None):
     cnx = mysql.connector.connect(
-        host=prop_reader.getDatabaseInfo('MYSQL_HOST'),
-        user=prop_reader.getDatabaseInfo('MYSQL_USERNAME'),
-        password=prop_reader.getDatabaseInfo('MYSQL_PASSWORD'),
-        database=prop_reader.getDatabaseInfo('MYSQL_DATABASE'),
-        port=prop_reader.getDatabaseInfo('MYSQL_PORT')
+        host=config.MYSQL_HOST,
+        user=config.MYSQL_USERNAME,
+        password=config.MYSQL_PASSWORD,
+        database=config.MYSQL_DATABASE,
+        port=config.MYSQL_PORT
     )
 
     if parameters is not None:
@@ -136,7 +134,7 @@ def getKey(identifier):
 # Allows for reversible encryption of data
 # Code from Dr. Ghassemi's CSE 477 course at MSU
 def reversibleEncrypt(method, message):
-    fernet = Fernet(prop_reader.getDatabaseInfo('ENCRYPTION_KEY'))
+    fernet = Fernet(config.ENCRYPTION_KEY)
 
     if method == 'encrypt':
         message = fernet.encrypt(message.encode())
