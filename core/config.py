@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(override=True)
 
 class Config:
     def __init__(self):
@@ -13,6 +13,7 @@ class Config:
         self.ENCRYPTION_KEY = os.getenv('ENCRYPTION_KEY')
 
         self.AWS_CHATGPT_API_URL = os.getenv('AWS_CHATGPT_API_URL')
+        self.AWS_CHATGPT_API_KEY = os.getenv('AWS_CHATGPT_API_KEY')
 
         self.WEATHER_API_KEY = os.getenv('WEATHER_API_KEY')
 

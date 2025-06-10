@@ -7,12 +7,19 @@ from datetime import datetime, timedelta, timezone
 
 
 async def call_lambda(payload):
+    headers = {
+        "x-api-key": config.AWS_CHATGPT_API_KEY,
+        "Content-Type": "application/json"
+    }
+
     async with aiohttp.ClientSession() as session:
-        async with session.post(config.AWS_CHATGPT_API_URL, json=payload) as resp:
-            if resp.status == 200:
+        async with session.post(config.AWS_CHATGPT_API_URL, json=payload, headers=headers) as resp:
+            resp.raise_for_status()
+
+            try:
                 data = await resp.json()
                 return resp.status, data["response"]
-            else:
+            except Exception as e:
                 error = await resp.text()
                 return resp.status, error
 
@@ -24,12 +31,12 @@ async def get_last_messages(channel, num_msgs=5):
 
     one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
 
-    async for message in channel.history(limit=num_msgs*2, after=one_hour_ago):
+    async for message in channel.history(limit=num_msgs*2, after=one_hour_ago, oldest_first=False):
         # Skip messages with attachments or with urls in their content
         if message.embeds or message.attachments or (("http://" in message.content or 'https://' in message.content) and message.author != whymightaGlobalVariables.bot.user):
             continue
 
-        content = message.content.strip()
+        content = message.content.replace(f"{whymightaGlobalVariables.bot.user.mention}", "").strip()
 
         # Skip if message content is empty
         if not content:
