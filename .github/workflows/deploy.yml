@@ -1,0 +1,89 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Kill all running tmux sessions
+      uses: appleboy/ssh-action@v0.1.7
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ubuntu
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          tmux kill-server 2>/dev/null || true
+
+
+    - name: Pull latest code on EC2
+      uses: appleboy/ssh-action@v0.1.7
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ubuntu
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          cd whymighta
+          git pull origin main
+
+
+    - name: Install Python Dependencies
+      uses: appleboy/ssh-action@v0.1.7
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ubuntu
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          cd whymighta
+
+          # Update python requirements
+          venv/bin/pip install -r requirements
+
+
+    - name: Pull latest code on EC2
+      uses: appleboy/ssh-action@v0.1.7
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ubuntu
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          cd whymighta
+
+          # Update the .env file (can overwrite or append)
+          echo "# Database environment variables" > .env
+          echo "MYSQL_USERNAME=\"${{ secrets.MYSQL_USERNAME }}\"" >> .env
+          echo "MYSQL_PASSWORD=\"${{ secrets.MYSQL_PASSWORD }}\"" >> .env
+          echo "MYSQL_HOST=\"${{ secrets.MYSQL_HOST }}\"" >> .env
+          echo "MYSQL_PORT=\"${{ secrets.MYSQL_PORT }}\"" >> .env
+          echo "MYSQL_DATABASE=\"${{ secrets.MYSQL_DATABASE }}\"" >> .env
+          echo "ENCRYPTION_KEY=\"${{ secrets.ENCRYPTION_KEY }}\"" >> .env
+          echo "" >> .env
+          echo "# AWS Lambda ChatGPT API" >> .env
+          echo "AWS_CHATGPT_API_URL=\"${{ secrets.AWS_CHATGPT_API_URL }}\"" >> .env
+          echo "AWS_CHATGPT_API_KEY=\"${{ secrets.AWS_CHATGPT_API_KEY }}\"" >> .env
+          echo "" >> .env
+          echo "# Weather API" >> .env
+          echo "WEATHER_API_KEY=\"${{ secrets.WEATHER_API_KEY }}\"" >> .env
+          echo "" >> .env
+          echo "# Discord Token" >> .env
+          echo "DISCORD_TOKEN=\"${{ secrets.DISCORD_TOKEN }}\"" >> .env
+
+
+    - name: Start tmux session and run bot script
+      uses: appleboy/ssh-action@v0.1.7
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ubuntu
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          tmux new-session -d -s whymighta-instance
+
+          tmux send-keys -t whymighta-instance "cd whymighta" C-m
+
+          tmux send-keys -t whymighta-instance "venv/bin/python whymighta.py" C-m
+
+          
