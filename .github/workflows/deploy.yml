@@ -28,6 +28,8 @@ jobs:
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
           cd whymighta
+          
+          git checkout main
           git pull origin main
 
 
@@ -41,7 +43,7 @@ jobs:
           cd whymighta
 
           # Update python requirements
-          venv/bin/pip install -r requirements
+          venv/bin/pip install -r requirements.txt
 
 
     - name: Pull latest code on EC2
