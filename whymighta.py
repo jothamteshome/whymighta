@@ -15,6 +15,7 @@ from core.config import config
 
 # Retrieve bot token from database
 TOKEN = config.DISCORD_TOKEN
+whymightaDatabase.createTables()
 
 
 @whymightaGlobalVariables.bot.event

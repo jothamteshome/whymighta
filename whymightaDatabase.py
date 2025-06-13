@@ -39,6 +39,15 @@ def queryDatabase(statement="SELECT * FROM users", parameters=None):
     return row
 
 
+def createTables(table_paths='database'):
+        # Create new tables
+        tables = ["guilds", 'users', 'games']
+
+        for table in tables:
+            with open(f"{table_paths}/{table}.sql", "r") as sql_table:
+                queryDatabase(" ".join(sql_table.readlines()))
+
+
 # Inserts multiple rows into the database
 # Code from Dr. Ghassemi's CSE 477 course at MSU
 def insertRows(table, columns, parameters):
@@ -92,7 +101,7 @@ def currentUserScore(user_id, guild_id):
     current_score = queryDatabase("SELECT `user_chat_score` FROM `users` WHERE `user_id` = %s AND `guild_id` = %s",
                                   [user_id, guild_id])[0]['user_chat_score']
 
-    return int(current_score)
+    return current_score
 
 
 # Update's user's server score by amount
@@ -123,7 +132,7 @@ def getBirthdayUsers(month, day):
     birthday_users = queryDatabase("SELECT user_id FROM `birthdays` WHERE MONTH(`birthday`) = %s AND DAY(`birthday`) "
                                    "= %s", [month, day])
 
-    return [{'user_id': int(user['user_id'])} for user in birthday_users]
+    return [{'user_id': user['user_id']} for user in birthday_users]
 
 
 # Allows for reversible encryption of data
@@ -211,7 +220,7 @@ def getBotTextChannelID(guild_id):
     if not channel_id:
         return None
     
-    return int(channel_id[0]['bot_channel_id'])
+    return channel_id[0]['bot_channel_id']
 
 
 def setBotTextChannelID(guild_id, channel_id):
