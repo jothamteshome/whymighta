@@ -45,7 +45,7 @@ jobs:
         aws ssm send-command \
           --instance-ids ${{ secrets.EC2_INSTANCE_ID }} \
           --document-name "AWS-RunShellScript" \
-          --parameters '{"commands":["mkdir -p whymighta && cd whymighta && git checkout main && git pull origin main"]}' \
+          --parameters '{"commands":["mkdir -p /home/ubuntu/whymighta && cd /home/ubuntu/whymighta && git checkout main && git pull origin main"]}' \
           --comment "Update code"
 
 
@@ -54,7 +54,7 @@ jobs:
         aws ssm send-command \
           --instance-ids ${{ secrets.EC2_INSTANCE_ID }} \
           --document-name "AWS-RunShellScript" \
-          --parameters '{"commands":["cd whymighta && python3 -m venv .venv 2>/dev/null || true && .venv/bin/pip install -U -r requirements.txt"]}' \
+          --parameters '{"commands":["cd /home/ubuntu/whymighta && python3 -m venv .venv 2>/dev/null || true && .venv/bin/pip install -U -r requirements.txt"]}' \
           --comment "Install requirements"
 
 
@@ -63,7 +63,7 @@ jobs:
         aws ssm send-command \
           --instance-ids ${{ secrets.EC2_INSTANCE_ID }} \
           --document-name "AWS-RunShellScript" \
-          --parameters '{"commands":["cd *** && tmux new-session -d -s ***-instance && tmux send-keys -t ***-instance \"source /etc/profile.d/load_ssm_env.sh && venv/bin/python ***.py\" C-m"]}' \
+          --parameters '{"commands":["cd /home/ubuntu/whymighta && tmux new-session -d -s whymighta-instance && tmux send-keys -t whymighta-instance \"source /etc/profile.d/load_ssm_env.sh && .venv/bin/python ***.py\" C-m"]}' \
           --comment "Start bot in tmux"
 
           
