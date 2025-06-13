@@ -9,6 +9,13 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+        
 
     - name: Update SSM Parameters
       run: |
@@ -22,14 +29,6 @@ jobs:
         aws ssm put-parameter --name "/whymighta/api/chatgpt/key" --value "${{ secrets.AWS_CHATGPT_API_KEY }}" --type "SecureString" --overwrite
         aws ssm put-parameter --name "/whymighta/api/weather/key" --value "${{ secrets.WEATHER_API_KEY }}" --type "SecureString" --overwrite
         aws ssm put-parameter --name "/whymighta/discord/token" --value "${{ secrets.DISCORD_TOKEN }}" --type "SecureString" --overwrite
-
-
-    - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-east-1
 
 
     - name: Kill all tmux sessions
@@ -46,7 +45,7 @@ jobs:
         aws ssm send-command \
           --instance-ids ${{ secrets.EC2_INSTANCE_ID }} \
           --document-name "AWS-RunShellScript" \
-          --parameters commands=["mdkir -p whymighta", "cd whymighta", "git checkout main", "git pull origin main"] \
+          --parameters commands=["mdkir -p whymighta && cd whymighta && git checkout main && git pull origin main"] \
           --comment "Update code"
 
 
@@ -55,7 +54,7 @@ jobs:
         aws ssm send-command \
           --instance-ids ${{ secrets.EC2_INSTANCE_ID }} \
           --document-name "AWS-RunShellScript" \
-          --parameters commands=["cd whymighta", "python3 -m venv .venv 2>/dev/null || true", ".venv/bin/pip install -U -r requirements.txt"] \
+          --parameters commands=["cd whymighta && python3 -m venv .venv 2>/dev/null || true && .venv/bin/pip install -U -r requirements.txt"] \
           --comment "Install requirements"
 
 
@@ -64,11 +63,7 @@ jobs:
         aws ssm send-command \
           --instance-ids ${{ secrets.EC2_INSTANCE_ID }} \
           --document-name "AWS-RunShellScript" \
-          --parameters commands=[
-            "cd whymighta",
-            "tmux new-session -d -s whymighta-instance",
-            "tmux send-keys -t whymighta-instance 'source /etc/profile.d/load_ssm_env.sh && venv/bin/python whymighta.py' C-m"
-          ] \
+          --parameters commands=["cd whymighta && tmux new-session -d -s whymighta-instance && tmux send-keys -t whymighta-instance \"source /etc/profile.d/load_ssm_env.sh && venv/bin/python whymighta.py\" C-m"] \
           --comment "Start bot in tmux"
 
           
