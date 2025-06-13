@@ -49,8 +49,11 @@ jobs:
             --query "CommandInvocations[0].Status" \
             --output text)
           echo "Status: $status"
-          if [[ "$status" == "Success" || "$status" == "Cancelled" || "$status" == "Failed" || "$status" == "TimedOut" ]]; then
+          if [[ "$status" == "Success" ]]; then
             break
+          elif [[ "$status" == "Cancelled" || "$status" == "Failed" || "$status" == "TimedOut" ]]; then
+            echo "Command failed with status: $status"
+            exit 1
           fi
           sleep 5
         done
@@ -78,8 +81,11 @@ jobs:
             --query "CommandInvocations[0].Status" \
             --output text)
           echo "Status: $status"
-          if [[ "$status" == "Success" || "$status" == "Cancelled" || "$status" == "Failed" || "$status" == "TimedOut" ]]; then
+          if [[ "$status" == "Success" ]]; then
             break
+          elif [[ "$status" == "Cancelled" || "$status" == "Failed" || "$status" == "TimedOut" ]]; then
+            echo "Command failed with status: $status"
+            exit 1
           fi
           sleep 5
         done
@@ -106,8 +112,11 @@ jobs:
             --query "CommandInvocations[0].Status" \
             --output text)
           echo "Status: $status"
-          if [[ "$status" == "Success" || "$status" == "Cancelled" || "$status" == "Failed" || "$status" == "TimedOut" ]]; then
+          if [[ "$status" == "Success" ]]; then
             break
+          elif [[ "$status" == "Cancelled" || "$status" == "Failed" || "$status" == "TimedOut" ]]; then
+            echo "Command failed with status: $status"
+            exit 1
           fi
           sleep 5
         done
@@ -135,8 +144,11 @@ jobs:
             --query "CommandInvocations[0].Status" \
             --output text)
           echo "Status: $status"
-          if [[ "$status" == "Success" || "$status" == "Cancelled" || "$status" == "Failed" || "$status" == "TimedOut" ]]; then
+          if [[ "$status" == "Success" ]]; then
             break
+          elif [[ "$status" == "Cancelled" || "$status" == "Failed" || "$status" == "TimedOut" ]]; then
+            echo "Command failed with status: $status"
+            exit 1
           fi
           sleep 5
         done
