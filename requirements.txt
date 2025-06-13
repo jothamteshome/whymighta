@@ -1,6 +1,6 @@
 cryptography
 disnake
-mysql-connector-python==9.0.0
+mysql-connector-python
 pillow
 pynacl
 python-dotenv
