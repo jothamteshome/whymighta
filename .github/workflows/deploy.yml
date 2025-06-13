@@ -33,37 +33,72 @@ jobs:
 
     - name: Kill all tmux sessions
       run: |
-        aws ssm send-command \
+        command_id=$(aws ssm send-command \
           --instance-ids ${{ secrets.EC2_INSTANCE_ID }} \
           --document-name "AWS-RunShellScript" \
           --parameters '{"commands":["tmux kill-server 2>/dev/null || true"]}' \
-          --comment "Kill old tmux sessions"
+          --comment "Kill old tmux sessions" \
+          --output text)
+        echo "command_id=$command_id" >> $GITHUB_ENV
+
+
+    - name: Wait for `Kill all tmux sessions` to complete
+      run: |
+        aws ssm wait command-executed \
+          -- command-id ${{ env.command_id }} \
+          -- instance-id ${{ secrets.EC2_INSTANCE_ID }}
 
 
     - name: Pull latest code on EC2
       run: |
-        aws ssm send-command \
+        command_id=$(aws ssm send-command \
           --instance-ids ${{ secrets.EC2_INSTANCE_ID }} \
           --document-name "AWS-RunShellScript" \
           --parameters '{"commands":["mkdir -p /home/ubuntu/whymighta && cd /home/ubuntu/whymighta && git config --global --add safe.directory /home/ubuntu/whymighta && git checkout main && git pull origin main"]}' \
-          --comment "Update code"
+          --comment "Update code" \
+          --output text)
+        echo "command_id=$command_id" >> $GITHUB_ENV
+
+
+    - name: Wait for `Pull latest code on EC2` to complete
+      run: |
+        aws ssm wait command-executed \
+          -- command-id ${{ env.command_id }} \
+          -- instance-id ${{ secrets.EC2_INSTANCE_ID }}
 
 
     - name: Install Python dependencies
       run: |
-        aws ssm send-command \
+        command_id=$(aws ssm send-command \
           --instance-ids ${{ secrets.EC2_INSTANCE_ID }} \
           --document-name "AWS-RunShellScript" \
           --parameters '{"commands":["cd /home/ubuntu/whymighta && python3 -m venv .venv 2>/dev/null || true && .venv/bin/pip install -U -r requirements.txt"]}' \
-          --comment "Install requirements"
+          --comment "Install requirements" \
+          --output text)
+        echo "command_id=$command_id" >> $GITHUB_ENV
+
+      
+    - name: Wait for `Install Python dependencies` to complete
+      run: |
+        aws ssm wait command-executed \
+          -- command-id ${{ env.command_id }} \
+          -- instance-id ${{ secrets.EC2_INSTANCE_ID }}
 
 
     - name: Start tmux session and run bot script
       run: |
-        aws ssm send-command \
+        command_id=$(aws ssm send-command \
           --instance-ids ${{ secrets.EC2_INSTANCE_ID }} \
           --document-name "AWS-RunShellScript" \
           --parameters '{"commands":["cd /home/ubuntu/whymighta && tmux new-session -d -s whymighta-instance && tmux send-keys -t whymighta-instance \"source /etc/profile.d/load_ssm_env.sh && .venv/bin/python ***.py\" C-m"]}' \
-          --comment "Start bot in tmux"
+          --comment "Start bot in tmux" \
+          --output text)
+        echo "command_id=$command_id" >> $GITHUB_ENV
 
+
+    - name: Wait for `Start tmux session and run bot script` to complete
+      run: |
+        aws ssm wait command-executed \
+          -- command-id ${{ env.command_id }} \
+          -- instance-id ${{ secrets.EC2_INSTANCE_ID }}
           
