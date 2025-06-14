@@ -50,8 +50,8 @@ async def on_guild_remove(guild):
 
 @whymightaGlobalVariables.bot.event
 async def on_application_command(inter):
-    await whymightaSupportFunctions.give_user_inter_xp(inter, catchingUp=False)
     await whymightaGlobalVariables.bot.process_application_commands(inter)
+    await whymightaSupportFunctions.give_user_inter_xp(inter, catchingUp=False)
 
 
 @whymightaGlobalVariables.bot.event
