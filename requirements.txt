@@ -1,6 +1,6 @@
+asyncmy
 cryptography
 disnake
-mysql-connector-python
 pillow
 pynacl
 python-dotenv

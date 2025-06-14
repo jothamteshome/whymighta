@@ -1,18 +1,18 @@
+import asyncio
+import asyncmy
 import datetime
-import itertools
-import mysql.connector
-import time
 import whymightaGlobalVariables
+
 
 from core.config import config
 from cryptography.fernet import Fernet
 from whymightaSupportFunctions import md5_hash
 
 
-def connect_with_retries(retries=6, delay=5):
-    for attempt in range(retries):
+async def connect_async(retries=5, delay=2):
+    for attempt in range(1, retries+1):
         try:
-            return mysql.connector.connect(
+            return await asyncmy.connect(
                 host=config.MYSQL_HOST,
                 user=config.MYSQL_USERNAME,
                 password=config.MYSQL_PASSWORD,
@@ -20,212 +20,165 @@ def connect_with_retries(retries=6, delay=5):
                 port=config.MYSQL_PORT,
                 connection_timeout=10
             )
-        except (mysql.connector.errors.InterfaceError, mysql.connector.errors.OperationalError) as e:
-            if attempt < retries - 1:
-                time.sleep(delay * (2 ** attempt))
-            else:
-                print(f"[DB Connection Failure] Attempted to connect to database {retries} times and failed.")
-                raise
+        except asyncmy.errors.OperationalError as e:
+            print(f"[DB Retry] Attempt {attempt} failed: {e}")
+            if attempt == retries:
+                raise  # Re-raise after last attempt
+            await asyncio.sleep(delay * (2 ** (attempt - 1)))
 
 
-# Query's the database
-def queryDatabase(statement="SELECT * FROM users", parameters=None):
-    cnx = connect_with_retries()
+# Query the database
+async def query_database(statement, parameters=None):
+    conn = await connect_async()
 
-    if parameters is not None:
-        cur = cnx.cursor(dictionary=True)
-        cur.execute(statement, parameters)
-    else:
-        cur = cnx.cursor(dictionary=True)
-        cur.execute(statement)
+    async with conn.cursor(as_dict=True) as cur:
+        if parameters is not None:
+            await cur.execute(statement, parameters)
+        else:
+            await cur.execute(statement)
 
-    # Fetch one result
-    row = cur.fetchall()
-    cnx.commit()
+        rows = await cur.fetchall()
 
-    if "INSERT" in statement:
-        cur.execute("SELECT LAST_INSERT_ID()")
-        row = cur.fetchall()
-        cnx.commit()
-    cur.close()
-    cnx.close()
-    return row
+    await conn.commit()
+    await conn.ensure_closed()
+
+    return rows
 
 
-def createTables(table_paths='database'):
-        # Create new tables
-        tables = ["guilds", 'users', 'games']
+async def create_tables(table_paths='database'):
+    # Create new tables
+    tables = ["guilds", 'users', 'games']
 
-        for table in tables:
-            with open(f"{table_paths}/{table}.sql", "r") as sql_table:
-                queryDatabase(" ".join(sql_table.readlines()))
+    for table in tables:
+        with open(f"{table_paths}/{table}.sql", "r") as sql_table:
+            await query_database(" ".join(sql_table.readlines()))
 
 
-# Inserts multiple rows into the database
-def insertRows(table, columns, parameters):
-    # Check if there are multiple rows present in the parameters
-    has_multiple_rows = any(isinstance(el, list) for el in parameters)
-    keys, values = ','.join(columns), ','.join(['%s' for x in columns])
+async def insert_rows(table, columns, parameters):
+    conn = await connect_async()
+    
+    col_string = ", ".join(columns)
+    param_string = ", ".join(['%s'] * len(columns))
+    insert_statement = f"INSERT IGNORE INTO {table} ({col_string}) VALUES ({param_string});"
+    
 
-    # Construct the query we will execute to insert the row(s)
-    statement = f"""INSERT IGNORE INTO {table} ({keys}) VALUES """
-    if has_multiple_rows:
-        for p in parameters:
-            statement += f"""({values}),"""
-        statement = statement[:-1]
-        parameters = list(itertools.chain(*parameters))
-    else:
-        statement += f"""({values}) """
-
-    insert_id = queryDatabase(statement, parameters)[0]['LAST_INSERT_ID()']
-    return insert_id
+    async with conn.cursor(as_dict=True) as cursor:
+        await cursor.executemany(insert_statement, parameters)
+        await conn.commit()
+        last_id = cursor.lastrowid
+        
+    await conn.ensure_closed()
+    return last_id
 
 
 # Add guild id to 'guilds' table
-def addGuild(guild_id, default_channel_id):
-    insertRows('guilds', ['guild_id', 'bot_channel_id'], [guild_id, default_channel_id])
+async def add_guild(guild_id, default_channel_id):
+    await insert_rows('guilds', ['guild_id', 'bot_channel_id'], [guild_id, default_channel_id])
 
 
 # Removes guild id from `guilds` table
-def removeGuild(guild_id):
-    queryDatabase("DELETE FROM `guilds` WHERE `guild_id` = %s", [guild_id])
+async def remove_guild(guild_id):
+    await query_database("DELETE FROM `guilds` WHERE `guild_id` = %s", [guild_id])
 
 
 # Add encrypted user id and guild id to 'users' table
-def addUser(user_id, guild_id):
-    insertRows('users', ['user_id', 'guild_id', 'user_chat_score'],
+async def add_user(user_id, guild_id):
+    await insert_rows('users', ['user_id', 'guild_id', 'user_chat_score'],
                [[user_id, guild_id, 0]])
 
 
 # Adds multiple users at once
-def addUsers(user_ids, guild_id):
+async def add_users(user_ids, guild_id):
     user_list = [[user_id, guild_id, 0] for user_id in user_ids]
-    insertRows('users', ['user_id', 'guild_id', 'user_chat_score'], user_list)
+    await insert_rows('users', ['user_id', 'guild_id', 'user_chat_score'], user_list)
 
 
 # Remove user id and guild id from `users` table
-def removeUser(user_id, guild_id):
-    queryDatabase("DELETE FROM `users` WHERE `user_id` = %s AND `guild_id` = %s", [user_id, guild_id])
+async def remove_user(user_id, guild_id):
+    await query_database("DELETE FROM `users` WHERE `user_id` = %s AND `guild_id` = %s", [user_id, guild_id])
 
 
 # Check a users current chat score
-def currentUserScore(user_id, guild_id):
-    current_score = queryDatabase("SELECT `user_chat_score` FROM `users` WHERE `user_id` = %s AND `guild_id` = %s",
-                                  [user_id, guild_id])[0]['user_chat_score']
+async def current_user_score(user_id, guild_id):
+    current_score = await query_database("SELECT `user_chat_score` FROM `users` WHERE `user_id` = %s AND `guild_id` = %s",
+                                            [user_id, guild_id])[0]['user_chat_score']
 
     return current_score
 
 
 # Update's user's server score by amount
-def updateUserScore(user_id, guild_id, increased_score):
-    queryDatabase("UPDATE `users` SET `user_chat_score` = %s WHERE `user_id` = %s AND `guild_id` = %s",
-                  [increased_score, user_id, guild_id])
-
-
-# Adds encrypted user id and birthday to 'birthdays' table, or updates it if it exists
-def addBirthday(user_id, birthday):
-    if queryDatabase("SELECT * FROM `birthdays` WHERE `user_id` = %s", [user_id]):
-        queryDatabase("DELETE FROM `birthdays` WHERE `user_id` = %s", [user_id])
-
-    insertRows('birthdays', ['user_id', 'birthday'], [[user_id, birthday]])
-
-
-# Removes a birthday from the 'birthdays'
-def removeBirthday(user_id):
-    if not queryDatabase("SELECT * FROM `birthdays` WHERE `user_id` = %s", [user_id]):
-        return False
-
-    queryDatabase("DELETE FROM `birthdays` WHERE `user_id` = %s", [user_id])
-    return True
-
-
-# Gets all users celebrating their birthday on the current day
-def getBirthdayUsers(month, day):
-    birthday_users = queryDatabase("SELECT user_id FROM `birthdays` WHERE MONTH(`birthday`) = %s AND DAY(`birthday`) "
-                                   "= %s", [month, day])
-
-    return [{'user_id': user['user_id']} for user in birthday_users]
-
-
-# Allows for reversible encryption of data
-def reversibleEncrypt(method, message):
-    fernet = Fernet(config.ENCRYPTION_KEY)
-
-    if method == 'encrypt':
-        message = fernet.encrypt(message.encode())
-    elif method == 'decrypt':
-        message = fernet.decrypt(message).decode()
-
-    return message
+async def update_user_score(user_id, guild_id, increased_score):
+    await query_database("UPDATE `users` SET `user_chat_score` = %s WHERE `user_id` = %s AND `guild_id` = %s",
+                            [increased_score, user_id, guild_id])
 
 
 # Toggles the mock status of the guild in the database
-def toggleMock(guild_id):
-    setTogglesOff(guild_id, 'mock')
+async def toggle_mock(guild_id):
+    await set_toggles_off(guild_id, 'mock')
 
-    current_status = queryMock(guild_id)
+    current_status = await query_mock(guild_id)
 
     if current_status:
-        queryDatabase("UPDATE `guilds` SET `mock` = %s WHERE `guild_id` = %s", [0, guild_id])
+        await query_database("UPDATE `guilds` SET `mock` = %s WHERE `guild_id` = %s", [0, guild_id])
         current_status = False
     else:
-        queryDatabase("UPDATE `guilds` SET `mock` = %s WHERE `guild_id` = %s", [1, guild_id])
+        await query_database("UPDATE `guilds` SET `mock` = %s WHERE `guild_id` = %s", [1, guild_id])
         current_status = True
 
     return current_status
 
 
-def toggleBinary(guild_id):
-    setTogglesOff(guild_id, 'binary')
+async def toggle_binary(guild_id):
+    await set_toggles_off(guild_id, 'binary')
 
-    current_status = queryBinary(guild_id)
+    current_status = await query_binary(guild_id)
 
     if current_status:
-        queryDatabase("UPDATE `guilds` SET `binary` = %s WHERE `guild_id` = %s", [0, guild_id])
+        await query_database("UPDATE `guilds` SET `binary` = %s WHERE `guild_id` = %s", [0, guild_id])
         current_status = False
     else:
-        queryDatabase("UPDATE `guilds` SET `binary` = %s WHERE `guild_id` = %s", [1, guild_id])
+        await query_database("UPDATE `guilds` SET `binary` = %s WHERE `guild_id` = %s", [1, guild_id])
         current_status = True
 
     return current_status
 
 
-def setTogglesOff(guild_id, called_from):
+async def set_toggles_off(guild_id, called_from):
     toggle_columns = {"mock", "binary"}
 
     toggle_columns.remove(called_from)
 
     for col in toggle_columns:
-        queryDatabase(f"UPDATE `guilds` SET `{col}` = %s WHERE `guild_id` = %s", [0, guild_id])
-
-
-def updateLastMessageSent(guild_id, updated_time):
-    queryDatabase("UPDATE `guilds` SET `last_message_sent` = %s WHERE `guild_id` = %s",
-                  [updated_time, guild_id])
+        await query_database(f"UPDATE `guilds` SET `{col}` = %s WHERE `guild_id` = %s", [0, guild_id])
 
 
 # Query's database for mocking status
-def queryMock(guild_id):
-    current_status = queryDatabase("SELECT `mock` FROM `guilds` WHERE `guild_id` = %s", [guild_id])[0]['mock']
+async def query_mock(guild_id):
+    current_status = await query_database("SELECT `mock` FROM `guilds` WHERE `guild_id` = %s", [guild_id])[0]['mock']
 
     return current_status
 
 
-def queryBinary(guild_id):
-    current_status = queryDatabase("SELECT `binary` FROM `guilds` WHERE `guild_id` = %s", [guild_id])[0]['binary']
+async def query_binary(guild_id):
+    current_status = await query_database("SELECT `binary` FROM `guilds` WHERE `guild_id` = %s", [guild_id])[0]['binary']
 
     return current_status
 
 
-def queryLastMessageSent(guild_id):
-    message_sent = queryDatabase("SELECT `last_message_sent` FROM `guilds` WHERE `guild_id` = %s",
-                                 [guild_id])[0]['last_message_sent']
+async def update_last_message_sent(guild_id, updated_time):
+    await query_database("UPDATE `guilds` SET `last_message_sent` = %s WHERE `guild_id` = %s",
+                            [updated_time, guild_id])
+
+
+async def query_last_message_sent(guild_id):
+    message_sent = await query_database("SELECT `last_message_sent` FROM `guilds` WHERE `guild_id` = %s",
+                                            [guild_id])[0]['last_message_sent']
 
     return message_sent.replace(tzinfo=datetime.timezone.utc)
 
 
-def getBotTextChannelID(guild_id):
-    channel_id = queryDatabase("SELECT `bot_channel_id` FROM `guilds` WHERE `guild_id` = %s", [guild_id])
+async def get_bot_text_channel_id(guild_id):
+    channel_id = await query_database("SELECT `bot_channel_id` FROM `guilds` WHERE `guild_id` = %s", [guild_id])
 
     # If channel id doesn't exist, return None
     if not channel_id:
@@ -234,25 +187,25 @@ def getBotTextChannelID(guild_id):
     return channel_id[0]['bot_channel_id']
 
 
-def setBotTextChannelID(guild_id, channel_id):
-    queryDatabase("UPDATE `guilds` SET `bot_channel_id` = %s WHERE `guild_id` = %s;", [channel_id, guild_id])
+async def set_bot_text_channel_id(guild_id, channel_id):
+    await query_database("UPDATE `guilds` SET `bot_channel_id` = %s WHERE `guild_id` = %s;", [channel_id, guild_id])
 
 
-def getGameFromList(guild_id, game_name):
-    game = queryDatabase("SELECT `game_name` FROM `games` WHERE `guild_id` = %s AND `game_hash` = %s", [guild_id, md5_hash(game_name.lower())])
+async def get_game_from_list(guild_id, game_name):
+    game = await query_database("SELECT `game_name` FROM `games` WHERE `guild_id` = %s AND `game_hash` = %s", [guild_id, md5_hash(game_name.lower())])
 
     return game
 
 
-def getAllGamesFromList(guild_id):
-    game_list = queryDatabase("SELECT `game_name` FROM `games` WHERE `guild_id` = %s", [guild_id])
+async def get_all_games_from_list(guild_id):
+    game_list = await query_database("SELECT `game_name` FROM `games` WHERE `guild_id` = %s", [guild_id])
 
     return game_list
 
 
-def addGameToList(guild_id, game_name):
-    insertRows('games', ['guild_id', 'game_name', 'game_hash'], [[guild_id, game_name, md5_hash(game_name.lower())]])
+async def add_game_to_list(guild_id, game_name):
+    await insert_rows('games', ['guild_id', 'game_name', 'game_hash'], [[guild_id, game_name, md5_hash(game_name.lower())]])
 
 
-def removeGameFromList(guild_id, game_name):
-    queryDatabase('DELETE FROM `games` WHERE `guild_id` = %s AND `game_hash` = %s ', [guild_id, md5_hash(game_name.lower())])
+async def remove_game_from_list(guild_id, game_name):
+    await query_database('DELETE FROM `games` WHERE `guild_id` = %s AND `game_hash` = %s ', [guild_id, md5_hash(game_name.lower())])

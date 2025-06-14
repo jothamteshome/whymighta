@@ -29,7 +29,7 @@ async def ping(inter):
 async def level(inter):
     await inter.response.defer()
 
-    curr_xp = whymightaDatabase.currentUserScore(inter.author.id, inter.guild_id)
+    curr_xp = await whymightaDatabase.current_user_score(inter.author.id, inter.guild_id)
     curr_level = whymightaSupportFunctions.check_level(curr_xp)
 
     curr_level_split = str(curr_level).split(".")

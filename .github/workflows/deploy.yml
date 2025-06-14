@@ -90,6 +90,37 @@ jobs:
           sleep 5
         done
 
+    - name: Uninstall Python dependencies
+      run: |
+        command_id=$(aws ssm send-command \
+          --instance-ids ${{ secrets.EC2_INSTANCE_ID }} \
+          --document-name "AWS-RunShellScript" \
+          --parameters '{"commands":[
+            "sudo -u ubuntu bash -c '\''cd /home/ubuntu/whymighta && python3 -m venv .venv 2>/dev/null || true && .venv/bin/pip uninstall -y -r <(.venv/bin/pip freeze)'\''"
+          ]}' \
+          --comment "Install requirements" \
+          --query 'Command.CommandId' \
+          --output text)
+        echo "command_id=$command_id" >> $GITHUB_ENV
+
+    - name: Wait for `Uninstall Python dependencies` to complete
+      run: |
+        while true; do
+          status=$(aws ssm list-command-invocations \
+            --command-id ${{ env.command_id }} \
+            --instance-id ${{ secrets.EC2_INSTANCE_ID }} \
+            --query "CommandInvocations[0].Status" \
+            --output text)
+          echo "Status: $status"
+          if [[ "$status" == "Success" ]]; then
+            break
+          elif [[ "$status" == "Cancelled" || "$status" == "Failed" || "$status" == "TimedOut" ]]; then
+            echo "Command failed with status: $status"
+            exit 1
+          fi
+          sleep 5
+        done
+
     - name: Install Python dependencies
       run: |
         command_id=$(aws ssm send-command \

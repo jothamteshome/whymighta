@@ -25,7 +25,7 @@ async def bot_channel(inter):
 async def set(inter):
     await inter.response.defer()    
 
-    whymightaDatabase.setBotTextChannelID(inter.guild.id, inter.channel.id)
+    await whymightaDatabase.set_bot_text_channel_id(inter.guild.id, inter.channel.id)
 
     await inter.edit_original_message(f"Bot messages will now appear in {inter.channel.name}!")
 
@@ -37,7 +37,7 @@ async def get(inter):
     await inter.response.defer()
     
 
-    bot_channel_id = whymightaDatabase.getBotTextChannelID(inter.guild.id)
+    bot_channel_id = await whymightaDatabase.get_bot_text_channel_id(inter.guild.id)
     bot_channel = None
 
 
@@ -72,7 +72,7 @@ async def toggle(inter):
 async def mock(inter):
     await inter.response.defer()
 
-    if whymightaDatabase.toggleMock(inter.guild_id):
+    if await whymightaDatabase.toggle_mock(inter.guild_id):
         await inter.edit_original_message("Mocking has been enabled")
     else:
         await inter.edit_original_message("Mocking has been disabled")
@@ -82,7 +82,7 @@ async def mock(inter):
 async def binary(inter):
     await inter.response.defer()
 
-    if whymightaDatabase.toggleBinary(inter.guild_id):
+    if await whymightaDatabase.toggle_binary(inter.guild_id):
         await inter.edit_original_message("Binary has been enabled")
     else:
         await inter.edit_original_message("Binary has been disabled")
