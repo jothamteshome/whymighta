@@ -20,7 +20,7 @@ def connect_with_retries(retries=6, delay=5):
                 port=config.MYSQL_PORT,
                 connection_timeout=10
             )
-        except mysql.connector.errors.InterfaceError as e:
+        except (mysql.connector.errors.InterfaceError, mysql.connector.errors.OperationalError) as e:
             if attempt < retries - 1:
                 time.sleep(delay * (2 ** attempt))
             else:
