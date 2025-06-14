@@ -2,11 +2,13 @@ import asyncio
 import asyncmy
 import datetime
 import whymightaGlobalVariables
+import logging
 
-
+from asyncmy.cursors import DictCursor
 from core.config import config
-from cryptography.fernet import Fernet
 from whymightaSupportFunctions import md5_hash
+
+logging.getLogger('asyncmy').setLevel(logging.ERROR)
 
 
 async def connect_async(retries=5, delay=2):
@@ -17,8 +19,8 @@ async def connect_async(retries=5, delay=2):
                 user=config.MYSQL_USERNAME,
                 password=config.MYSQL_PASSWORD,
                 database=config.MYSQL_DATABASE,
-                port=config.MYSQL_PORT,
-                connection_timeout=10
+                port=int(config.MYSQL_PORT),
+                connect_timeout=10
             )
         except asyncmy.errors.OperationalError as e:
             print(f"[DB Retry] Attempt {attempt} failed: {e}")
@@ -31,7 +33,7 @@ async def connect_async(retries=5, delay=2):
 async def query_database(statement, parameters=None):
     conn = await connect_async()
 
-    async with conn.cursor(as_dict=True) as cur:
+    async with conn.cursor(DictCursor) as cur:
         if parameters is not None:
             await cur.execute(statement, parameters)
         else:
@@ -61,8 +63,7 @@ async def insert_rows(table, columns, parameters):
     param_string = ", ".join(['%s'] * len(columns))
     insert_statement = f"INSERT IGNORE INTO {table} ({col_string}) VALUES ({param_string});"
     
-
-    async with conn.cursor(as_dict=True) as cursor:
+    async with conn.cursor(DictCursor) as cursor:
         await cursor.executemany(insert_statement, parameters)
         await conn.commit()
         last_id = cursor.lastrowid
@@ -73,7 +74,7 @@ async def insert_rows(table, columns, parameters):
 
 # Add guild id to 'guilds' table
 async def add_guild(guild_id, default_channel_id):
-    await insert_rows('guilds', ['guild_id', 'bot_channel_id'], [guild_id, default_channel_id])
+    await insert_rows('guilds', ['guild_id', 'bot_channel_id'], [(guild_id, default_channel_id)])
 
 
 # Removes guild id from `guilds` table
@@ -83,13 +84,12 @@ async def remove_guild(guild_id):
 
 # Add encrypted user id and guild id to 'users' table
 async def add_user(user_id, guild_id):
-    await insert_rows('users', ['user_id', 'guild_id', 'user_chat_score'],
-               [[user_id, guild_id, 0]])
+    await insert_rows('users', ['user_id', 'guild_id', 'user_chat_score'], [(user_id, guild_id, 0)])
 
 
 # Adds multiple users at once
 async def add_users(user_ids, guild_id):
-    user_list = [[user_id, guild_id, 0] for user_id in user_ids]
+    user_list = [(user_id, guild_id, 0) for user_id in user_ids]
     await insert_rows('users', ['user_id', 'guild_id', 'user_chat_score'], user_list)
 
 
@@ -100,16 +100,14 @@ async def remove_user(user_id, guild_id):
 
 # Check a users current chat score
 async def current_user_score(user_id, guild_id):
-    current_score = await query_database("SELECT `user_chat_score` FROM `users` WHERE `user_id` = %s AND `guild_id` = %s",
-                                            [user_id, guild_id])[0]['user_chat_score']
+    current_score = await query_database("SELECT `user_chat_score` FROM `users` WHERE `user_id` = %s AND `guild_id` = %s", [user_id, guild_id])
 
-    return current_score
+    return current_score[0]['user_chat_score']
 
 
 # Update's user's server score by amount
 async def update_user_score(user_id, guild_id, increased_score):
-    await query_database("UPDATE `users` SET `user_chat_score` = %s WHERE `user_id` = %s AND `guild_id` = %s",
-                            [increased_score, user_id, guild_id])
+    await query_database("UPDATE `users` SET `user_chat_score` = %s WHERE `user_id` = %s AND `guild_id` = %s", [increased_score, user_id, guild_id])
 
 
 # Toggles the mock status of the guild in the database
@@ -154,27 +152,25 @@ async def set_toggles_off(guild_id, called_from):
 
 # Query's database for mocking status
 async def query_mock(guild_id):
-    current_status = await query_database("SELECT `mock` FROM `guilds` WHERE `guild_id` = %s", [guild_id])[0]['mock']
+    current_status = await query_database("SELECT `mock` FROM `guilds` WHERE `guild_id` = %s", [guild_id])
 
-    return current_status
+    return current_status[0]['mock']
 
 
 async def query_binary(guild_id):
-    current_status = await query_database("SELECT `binary` FROM `guilds` WHERE `guild_id` = %s", [guild_id])[0]['binary']
+    current_status = await query_database("SELECT `binary` FROM `guilds` WHERE `guild_id` = %s", [guild_id])
 
-    return current_status
+    return current_status[0]['binary']
 
 
 async def update_last_message_sent(guild_id, updated_time):
-    await query_database("UPDATE `guilds` SET `last_message_sent` = %s WHERE `guild_id` = %s",
-                            [updated_time, guild_id])
+    await query_database("UPDATE `guilds` SET `last_message_sent` = %s WHERE `guild_id` = %s", [updated_time, guild_id])
 
 
 async def query_last_message_sent(guild_id):
-    message_sent = await query_database("SELECT `last_message_sent` FROM `guilds` WHERE `guild_id` = %s",
-                                            [guild_id])[0]['last_message_sent']
+    message_sent = await query_database("SELECT `last_message_sent` FROM `guilds` WHERE `guild_id` = %s", [guild_id])
 
-    return message_sent.replace(tzinfo=datetime.timezone.utc)
+    return message_sent[0]['last_message_sent'].replace(tzinfo=datetime.timezone.utc)
 
 
 async def get_bot_text_channel_id(guild_id):
@@ -204,8 +200,8 @@ async def get_all_games_from_list(guild_id):
 
 
 async def add_game_to_list(guild_id, game_name):
-    await insert_rows('games', ['guild_id', 'game_name', 'game_hash'], [[guild_id, game_name, md5_hash(game_name.lower())]])
+    await insert_rows('games', ['guild_id', 'game_name', 'game_hash'], [(guild_id, game_name, md5_hash(game_name.lower()))])
 
 
 async def remove_game_from_list(guild_id, game_name):
-    await query_database('DELETE FROM `games` WHERE `guild_id` = %s AND `game_hash` = %s ', [guild_id, md5_hash(game_name.lower())])
+    await query_database("DELETE FROM `games` WHERE `guild_id` = %s AND `game_hash` = %s", [guild_id, md5_hash(game_name.lower())])
