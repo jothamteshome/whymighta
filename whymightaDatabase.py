@@ -1,23 +1,36 @@
-import mysql.connector
-import itertools
-import whymightaGlobalVariables
-from core.config import config
 import datetime
+import itertools
+import mysql.connector
+import time
+import whymightaGlobalVariables
 
+from core.config import config
 from cryptography.fernet import Fernet
 from whymightaSupportFunctions import md5_hash
 
 
+def connect_with_retries(retries=6, delay=5):
+    for attempt in range(retries):
+        try:
+            return mysql.connector.connect(
+                host=config.MYSQL_HOST,
+                user=config.MYSQL_USERNAME,
+                password=config.MYSQL_PASSWORD,
+                database=config.MYSQL_DATABASE,
+                port=config.MYSQL_PORT,
+                connection_timeout=10
+            )
+        except mysql.connector.errors.InterfaceError as e:
+            if attempt < retries - 1:
+                time.sleep(delay * (2 ** attempt))
+            else:
+                print(f"[DB Connection Failure] Attempted to connect to database {retries} times and failed.")
+                raise
+
+
 # Query's the database
-# Code from Dr. Ghassemi's CSE 477 course at MSU
 def queryDatabase(statement="SELECT * FROM users", parameters=None):
-    cnx = mysql.connector.connect(
-        host=config.MYSQL_HOST,
-        user=config.MYSQL_USERNAME,
-        password=config.MYSQL_PASSWORD,
-        database=config.MYSQL_DATABASE,
-        port=config.MYSQL_PORT
-    )
+    cnx = connect_with_retries()
 
     if parameters is not None:
         cur = cnx.cursor(dictionary=True)
@@ -49,7 +62,6 @@ def createTables(table_paths='database'):
 
 
 # Inserts multiple rows into the database
-# Code from Dr. Ghassemi's CSE 477 course at MSU
 def insertRows(table, columns, parameters):
     # Check if there are multiple rows present in the parameters
     has_multiple_rows = any(isinstance(el, list) for el in parameters)
@@ -136,7 +148,6 @@ def getBirthdayUsers(month, day):
 
 
 # Allows for reversible encryption of data
-# Code from Dr. Ghassemi's CSE 477 course at MSU
 def reversibleEncrypt(method, message):
     fernet = Fernet(config.ENCRYPTION_KEY)
 
