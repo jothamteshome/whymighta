@@ -27,6 +27,8 @@ async def ping(inter):
 @utilities.sub_command(
     description="Checks the level of a user")
 async def level(inter):
+    await inter.response.defer()
+
     curr_xp = whymightaDatabase.currentUserScore(inter.author.id, inter.guild_id)
     curr_level = whymightaSupportFunctions.check_level(curr_xp)
 
@@ -40,7 +42,7 @@ async def level(inter):
     embed.add_field(name=f"{next_level_progress}% to Level {int(curr_level_split[0]) + 1}",
                     value=(progress_bar * "🔵") + ((10 - progress_bar) * "⚪"), inline=False)
 
-    await inter.response.send_message(embed=embed)
+    await inter.edit_original_message(embed=embed)
 
 
 @utilities.sub_command(

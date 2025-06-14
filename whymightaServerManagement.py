@@ -60,7 +60,7 @@ async def clear(inter, number: int = 5):
         await inter.response.send_message("Error clearing messages from channel")
     else:
         await whymightaSupportFunctions.clearMessage(inter, number)
-        await inter.channel.purge(limit=number)
+        await inter.channel.purge(limit=number+1)
 
 
 @manage.sub_command_group()
@@ -70,18 +70,22 @@ async def toggle(inter):
 
 @toggle.sub_command(description="Toggles the mock status of the bot")
 async def mock(inter):
+    await inter.response.defer()
+
     if whymightaDatabase.toggleMock(inter.guild_id):
-        await inter.response.send_message("Mocking has been enabled")
+        await inter.edit_original_message("Mocking has been enabled")
     else:
-        await inter.response.send_message("Mocking has been disabled")
+        await inter.edit_original_message("Mocking has been disabled")
 
 
 @toggle.sub_command(description="Toggles the binary writing status of the bot")
 async def binary(inter):
+    await inter.response.defer()
+
     if whymightaDatabase.toggleBinary(inter.guild_id):
-        await inter.response.send_message("Binary has been enabled")
+        await inter.edit_original_message("Binary has been enabled")
     else:
-        await inter.response.send_message("Binary has been disabled")
+        await inter.edit_original_message("Binary has been disabled")
 
 
 @manage.sub_command_group()

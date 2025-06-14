@@ -1,4 +1,3 @@
-import whymightaDatabase
 import whymightaGlobalVariables
 
 from aiohttp import ClientSession
