@@ -1,11 +1,20 @@
-import disnake
-import whymightaGlobalVariables
+from disnake.ext import commands
 
-@whymightaGlobalVariables.bot.slash_command(
-        description="Descriptions of bot commands"
-)
-async def help(inter):
-    await inter.response.send_message("WIP")
+
+class Help(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+
+    
+    @commands.slash_command(
+            description="Descriptions of bot commands"
+    )
+    async def help(self, inter):
+        await inter.response.send_message("WIP")
+
+
+def setup(bot):
+    bot.add_cog(Help(bot))
 
 
 # @help.sub_command()
