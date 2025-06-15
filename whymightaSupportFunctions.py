@@ -237,3 +237,16 @@ def defaultGuildTextChannel(guild):
 
 def md5_hash(unhashed_string):
     return hashlib.md5(unhashed_string.encode('utf-8')).hexdigest()
+
+
+async def delete_thread(guild, thread_id):
+    # Get thread by id
+    thread = guild.get_thread(thread_id)
+
+    # Delete thread
+    await thread.delete()
+
+    # Remove thread from database
+    await whymightaDatabase.remove_thread_id(thread_id)
+
+    return thread.name

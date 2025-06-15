@@ -1,5 +1,9 @@
 import aiohttp
+import disnake
 import re
+import time
+import whymightaDatabase
+import whymightaSupportFunctions
 import whymightaGlobalVariables
 
 from core.config import config
@@ -92,3 +96,60 @@ async def chatting(message):
     await message.channel.send(response_text)
 
 
+@whymightaGlobalVariables.bot.slash_command()
+async def chat(inter):
+    pass
+
+
+@chat.sub_command(description="Create thread session to communicate with bot alone")
+async def new_session(inter):
+    await inter.response.defer()
+
+    # Get existing thread id or None
+    existing_session_id = await whymightaDatabase.get_thread_id(inter.guild.id, inter.author.id)
+
+    if existing_session_id:
+        await whymightaSupportFunctions.delete_thread(inter.guild, existing_session_id)
+
+    bot_channel_id = await whymightaDatabase.get_bot_text_channel_id(inter.guild.id)
+    bot_channel = await whymightaGlobalVariables.bot.fetch_channel(bot_channel_id)
+
+    # Create new private thread
+    thread = await bot_channel.create_thread(
+        name=f"{inter.author}-{hex(int(time.time()))[2:]} Private Thread",
+        auto_archive_duration=60,
+        type=disnake.ChannelType.private_thread
+    )
+
+    # Store thread in database
+    await whymightaDatabase.set_thread_id(thread.id, inter.guild.id, inter.author.id)
+
+    # Make bot join new private thread
+    await thread.join()
+
+    # Add interaction caller to thread
+    await thread.add_user(inter.author)
+
+    # Send message to channel command was sent in
+    await inter.followup.send(f"Created thread \"{thread.name}\"", ephemeral=True)
+
+
+@chat.sub_command(description="Delete thread session")
+async def end_session(inter):
+    await inter.response.defer()
+
+    author_thread_id = await whymightaDatabase.get_thread_id(inter.guild.id, inter.author.id)
+
+    if not author_thread_id:
+        await inter.edit_original_response(f"No thead exists for {inter.author.name} in guild {inter.guild.name}.")
+        return
+
+    # Delete user's thread
+    thread_name = await whymightaSupportFunctions.delete_thread(inter.guild, author_thread_id)
+
+    # If command sent from user's current thread session, do not attempt to send message thorugh it
+    if isinstance(inter.channel, disnake.threads.Thread) and inter.channel.id == author_thread_id:
+        return
+    
+    # Send message to channel command was sent in
+    await inter.followup.send(f"Deleted thread \"{thread_name}\"", ephemeral=True)

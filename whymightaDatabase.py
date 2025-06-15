@@ -49,7 +49,7 @@ async def query_database(statement, parameters=None):
 
 async def create_tables(table_paths='database'):
     # Create new tables
-    tables = ["guilds", 'users', 'games']
+    tables = ["guilds", 'users', 'games', 'threads']
 
     for table in tables:
         with open(f"{table_paths}/{table}.sql", "r") as sql_table:
@@ -205,3 +205,17 @@ async def add_game_to_list(guild_id, game_name):
 
 async def remove_game_from_list(guild_id, game_name):
     await query_database("DELETE FROM `games` WHERE `guild_id` = %s AND `game_hash` = %s", [guild_id, md5_hash(game_name.lower())])
+
+
+async def set_thread_id(thread_id, guild_id, user_id):
+    await insert_rows('threads', ['thread_id', 'guild_id', 'user_id'], [(thread_id, guild_id, user_id)])
+
+
+async def get_thread_id(guild_id, user_id):
+    thread_id = await query_database("SELECT `thread_id` FROM `threads` WHERE `guild_id` = %s AND `user_id` = %s", [guild_id, user_id])
+
+    return thread_id[0]['thread_id'] if thread_id else None
+
+
+async def remove_thread_id(thread_id):
+    await query_database("DELETE FROM `threads` WHERE `thread_id` = %s", [thread_id])
