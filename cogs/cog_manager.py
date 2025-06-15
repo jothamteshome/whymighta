@@ -1,4 +1,5 @@
-from disnake import ApplicationCommandInteraction
+import os
+from disnake import ApplicationCommandInteraction, Embed
 from disnake.ext import commands
 
 class CogManager(commands.Cog):
@@ -9,6 +10,25 @@ class CogManager(commands.Cog):
     @commands.is_owner()
     async def cog(self, inter: ApplicationCommandInteraction):
         pass
+
+    @cog.sub_command(description="List available cogs")
+    async def list(self, inter: ApplicationCommandInteraction):
+        await inter.response.defer(ephemeral=True)
+        embed = Embed()
+
+        embed = Embed(title="Available Cogs", description=f"\n{'-' * 25}", color=0x9534eb)          
+
+        for filename in os.listdir("./cogs"):
+            if filename.endswith(".py"):
+                name, ext = os.path.splitext(filename)
+
+                if name == "cog_manager":
+                    continue
+
+                embed.add_field(name=f"• {name}", value="", inline=False)
+
+
+        await inter.edit_original_message(embed=embed)
 
 
     @cog.sub_command(description="Load a cog")
