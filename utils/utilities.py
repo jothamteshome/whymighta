@@ -3,7 +3,7 @@ import io
 import math
 import requests
 import random
-import whymightaDatabase
+import utils.database as database
 import whymightaGlobalVariables
 import hashlib
 
@@ -14,7 +14,7 @@ from PIL import Image
 # after filtering out links and attachments
 async def mock_user(message):
     channel = message.channel
-    if await whymightaDatabase.query_mock(message.guild.id):
+    if await database.query_mock(message.guild.id):
         if "http" in message.content.split("://")[0]:
             await channel.send(message.content)
         elif len(message.attachments) > 0:
@@ -28,7 +28,7 @@ async def mock_user(message):
 
 async def binarize_message(message):
     channel = message.channel
-    if await whymightaDatabase.query_binary(message.guild.id):
+    if await database.query_binary(message.guild.id):
         if "http" in message.content.split("://")[0]:
             await channel.send(message.content)
         elif len(message.attachments) > 0:
@@ -68,14 +68,14 @@ async def give_user_message_xp(message, catchingUp):
     attachments_xp = len(message.attachments) * 10
     content_xp = len(message.content)
 
-    prev_xp = await whymightaDatabase.current_user_score(message.author.id, message.guild.id)
+    prev_xp = await database.current_user_score(message.author.id, message.guild.id)
     curr_xp = prev_xp + mentions_xp + attachments_xp + content_xp
 
     if not catchingUp:
         await announce_level_up(prev_xp, curr_xp, message.author, message.channel)
 
-    await whymightaDatabase.update_user_score(message.author.id, message.guild.id, curr_xp)
-    await whymightaDatabase.update_last_message_sent(message.guild.id, message.created_at)
+    await database.update_user_score(message.author.id, message.guild.id, curr_xp)
+    await database.update_last_message_sent(message.guild.id, message.created_at)
 
 
 async def give_user_inter_xp(inter, catchingUp):
@@ -84,14 +84,14 @@ async def give_user_inter_xp(inter, catchingUp):
         for option in inter.options:
             score += len(option)
 
-        prev_xp = await whymightaDatabase.current_user_score(inter.author.id, inter.guild_id)
+        prev_xp = await database.current_user_score(inter.author.id, inter.guild_id)
         curr_xp = prev_xp + score
 
         if not catchingUp:
             await announce_level_up(prev_xp, curr_xp, inter.author, inter.channel)
 
-        await whymightaDatabase.update_user_score(inter.author.id, inter.guild_id, curr_xp)
-        await whymightaDatabase.update_last_message_sent(inter.guild.id, inter.created_at)
+        await database.update_user_score(inter.author.id, inter.guild_id, curr_xp)
+        await database.update_last_message_sent(inter.guild.id, inter.created_at)
 
 
 # Announce if a user has leveled up
@@ -100,7 +100,7 @@ async def announce_level_up(previous_xp, current_xp, user, text_channel):
     curr_level = check_level(current_xp)
 
     if math.floor(curr_level) > math.floor(prev_level):
-        bot_channel_id = await whymightaDatabase.get_bot_text_channel_id(text_channel.guild.id)
+        bot_channel_id = await database.get_bot_text_channel_id(text_channel.guild.id)
 
         if not bot_channel_id:
             await text_channel.send(f"Congratulations {user.mention}! You've reached Level {math.floor(curr_level)}!")
@@ -167,7 +167,7 @@ async def serverMessageCatchUp(bot):
     for guild in bot.guilds:
 
         # Retrieve the time of the last message the bot saw
-        last_server_message_time = await whymightaDatabase.query_last_message_sent(guild.id)
+        last_server_message_time = await database.query_last_message_sent(guild.id)
 
         # Initialize the latest message time
         latest_message_time = last_server_message_time
@@ -193,7 +193,7 @@ async def serverMessageCatchUp(bot):
                     latest_message_time = latest_channel_message.created_at
 
         # Update guild's latest message time to be the most recent of all messages in guild
-        await whymightaDatabase.update_last_message_sent(guild.id, latest_message_time)
+        await database.update_last_message_sent(guild.id, latest_message_time)
 
 
 async def updateNewMembers(bot):
@@ -202,8 +202,8 @@ async def updateNewMembers(bot):
         # Add all users that joined while the bot was offline
         member_ids = [member.id for member in guild.members if not member.bot]
 
-        await whymightaDatabase.add_guild(guild.id, defaultGuildTextChannel(guild))
-        await whymightaDatabase.add_users(member_ids, guild.id)
+        await database.add_guild(guild.id, defaultGuildTextChannel(guild))
+        await database.add_users(member_ids, guild.id)
 
 
 # Replaces the tokens in a chatbot reply
@@ -247,6 +247,6 @@ async def delete_thread(guild, thread_id):
     await thread.delete()
 
     # Remove thread from database
-    await whymightaDatabase.remove_thread_id(thread_id)
+    await database.remove_thread_id(thread_id)
 
     return thread.name

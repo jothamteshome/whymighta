@@ -2,7 +2,7 @@ import math
 import disnake
 import time
 
-import whymightaDatabase
+import utils.database as database
 import whymightaGlobalVariables
 import utils.utilities as utilities
 
@@ -29,7 +29,7 @@ async def ping(inter):
 async def level(inter):
     await inter.response.defer()
 
-    curr_xp = await whymightaDatabase.current_user_score(inter.author.id, inter.guild_id)
+    curr_xp = await database.current_user_score(inter.author.id, inter.guild_id)
     curr_level = utilities.check_level(curr_xp)
 
     curr_level_split = str(curr_level).split(".")

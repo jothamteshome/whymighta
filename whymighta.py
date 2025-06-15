@@ -1,6 +1,6 @@
 import disnake
 
-import whymightaDatabase
+import utils.database as database
 import whymightaGlobalVariables
 import utils.utilities as utilities
 import whymightaServerManagement
@@ -19,7 +19,7 @@ TOKEN = config.DISCORD_TOKEN
 
 @whymightaGlobalVariables.bot.event
 async def on_ready():
-    await whymightaDatabase.create_tables()
+    await database.create_tables()
     await utilities.updateNewMembers(whymightaGlobalVariables.bot)
     await utilities.serverMessageCatchUp(whymightaGlobalVariables.bot)
     print("Logged in as {0.user}".format(whymightaGlobalVariables.bot))
@@ -39,13 +39,13 @@ async def on_message(message):
 async def on_guild_join(guild):
     member_ids = [member.id for member in guild.members if not member.bot]
     
-    await whymightaDatabase.add_guild(guild.id, utilities.defaultGuildTextChannel(guild))
-    await whymightaDatabase.add_users(member_ids, guild.id)
+    await database.add_guild(guild.id, utilities.defaultGuildTextChannel(guild))
+    await database.add_users(member_ids, guild.id)
 
 
 @whymightaGlobalVariables.bot.event
 async def on_guild_remove(guild):
-    await whymightaDatabase.remove_guild(guild.id)
+    await database.remove_guild(guild.id)
 
 
 @whymightaGlobalVariables.bot.event
@@ -56,19 +56,19 @@ async def on_application_command(inter):
 
 @whymightaGlobalVariables.bot.event
 async def on_member_join(member):
-    await whymightaDatabase.add_user(member.id, member.guild.id)
+    await database.add_user(member.id, member.guild.id)
 
 
 @whymightaGlobalVariables.bot.event
 async def on_member_remove(member):
-    await whymightaDatabase.removeUser(member.id, member.guild.id)
+    await database.removeUser(member.id, member.guild.id)
 
 
 @whymightaGlobalVariables.bot.event
 async def on_guild_channel_delete(channel):
-    bot_text_channel_id = await whymightaDatabase.get_bot_text_channel_id(channel.guild.id)
+    bot_text_channel_id = await database.get_bot_text_channel_id(channel.guild.id)
 
     if channel.id == bot_text_channel_id:
-        await whymightaDatabase.set_bot_text_channel_id(utilities.defaultGuildTextChannel(channel.guild))
+        await database.set_bot_text_channel_id(utilities.defaultGuildTextChannel(channel.guild))
 
 whymightaGlobalVariables.bot.run(TOKEN)

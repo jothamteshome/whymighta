@@ -2,7 +2,7 @@ import random
 import disnake
 import time
 
-import whymightaDatabase
+import utils.database as database
 import whymightaGlobalVariables
 
 
@@ -16,7 +16,7 @@ async def list(inter):
     await inter.response.defer()
 
     embed = disnake.Embed(title="Games List", description=f"\n{'-' * 25}", color=0x9534eb)
-    games_list = await whymightaDatabase.get_all_games_from_list(inter.guild.id)
+    games_list = await database.get_all_games_from_list(inter.guild.id)
 
     for game in games_list:
         embed.add_field(name=f"• {game['game_name']}", value="", inline=False)
@@ -30,12 +30,12 @@ async def list(inter):
 async def add(inter, name: str):
     await inter.response.defer()
 
-    game = await whymightaDatabase.get_game_from_list(inter.guild.id, name)
+    game = await database.get_game_from_list(inter.guild.id, name)
 
     if game:
         await inter.edit_original_message(f"{name} already exists in games list")
     else:
-        await whymightaDatabase.add_game_to_list(inter.guild.id, name)
+        await database.add_game_to_list(inter.guild.id, name)
         await inter.edit_original_message(f"{name} added to games list")
 
 
@@ -44,10 +44,10 @@ async def add(inter, name: str):
 async def remove(inter, name: str):
     await inter.response.defer()
 
-    game = await whymightaDatabase.get_game_from_list(inter.guild.id, name)
+    game = await database.get_game_from_list(inter.guild.id, name)
 
     if game: 
-        await whymightaDatabase.remove_game_from_list(inter.guild.id, name)
+        await database.remove_game_from_list(inter.guild.id, name)
         await inter.edit_original_message(f"{name} has been removed from games list")
     else:
         await inter.edit_original_message(f"{name} does not exist in games list")
@@ -58,7 +58,7 @@ async def remove(inter, name: str):
 async def choose(inter):
     await inter.response.defer()
 
-    games = await whymightaDatabase.get_all_games_from_list(inter.guild.id)
+    games = await database.get_all_games_from_list(inter.guild.id)
 
     if not games:
         await inter.edit_original_message(f"Games list is empty. Please add a game before using this command")

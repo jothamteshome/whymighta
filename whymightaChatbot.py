@@ -2,7 +2,7 @@ import aiohttp
 import disnake
 import re
 import time
-import whymightaDatabase
+import utils.database as database
 import utils.utilities as utilities
 import whymightaGlobalVariables
 
@@ -106,12 +106,12 @@ async def new_session(inter):
     await inter.response.defer()
 
     # Get existing thread id or None
-    existing_session_id = await whymightaDatabase.get_thread_id(inter.guild.id, inter.author.id)
+    existing_session_id = await database.get_thread_id(inter.guild.id, inter.author.id)
 
     if existing_session_id:
         await utilities.delete_thread(inter.guild, existing_session_id)
 
-    bot_channel_id = await whymightaDatabase.get_bot_text_channel_id(inter.guild.id)
+    bot_channel_id = await database.get_bot_text_channel_id(inter.guild.id)
     bot_channel = await whymightaGlobalVariables.bot.fetch_channel(bot_channel_id)
 
     # Create new private thread
@@ -122,7 +122,7 @@ async def new_session(inter):
     )
 
     # Store thread in database
-    await whymightaDatabase.set_thread_id(thread.id, inter.guild.id, inter.author.id)
+    await database.set_thread_id(thread.id, inter.guild.id, inter.author.id)
 
     # Make bot join new private thread
     await thread.join()
@@ -138,7 +138,7 @@ async def new_session(inter):
 async def end_session(inter):
     await inter.response.defer()
 
-    author_thread_id = await whymightaDatabase.get_thread_id(inter.guild.id, inter.author.id)
+    author_thread_id = await database.get_thread_id(inter.guild.id, inter.author.id)
 
     if not author_thread_id:
         await inter.edit_original_response(f"No thead exists for {inter.author.name} in guild {inter.guild.name}.")
