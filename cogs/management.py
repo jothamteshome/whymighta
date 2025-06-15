@@ -4,18 +4,38 @@ import random
 from disnake.ext import commands
 from io import BytesIO
 from utils.database import Database
+from utils.helpers import Helpers
 
 
 class Management(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.database = Database()
+        self.helpers = Helpers(self.bot)
 
     @commands.slash_command(
             default_member_permissions=disnake.Permissions(administrator=True)
     )
     async def manage(self, inter):
         pass
+
+    @manage.sub_command_group()
+    async def guild(self, inter):
+        pass
+
+    @guild.sub_command(description="Clears all guild application commands")
+    @commands.is_owner()
+    async def clear_app_commands(self, inter):
+        await inter.response.defer(ephemeral=True)
+        guilds = await self.helpers.clear_guild_commands()
+
+        embed = disnake.Embed(title="Guilds Cleared", description=f"\n{'-' * 25}", color=0x9534eb)
+
+        for guild in guilds:
+            embed.add_field(name=f"• {guild.id} - {guild.name}", value="", inline=False)
+
+        await inter.edit_original_message(embed=embed)
+
 
     @manage.sub_command_group()
     async def channel(self, inter):

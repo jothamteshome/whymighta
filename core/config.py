@@ -19,6 +19,4 @@ class Config:
 
         self.DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
 
-        self.DEBUG = os.getenv('DEBUG', 'FALSE') == 'TRUE'
-
 config = Config()

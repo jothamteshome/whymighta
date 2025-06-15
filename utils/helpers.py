@@ -12,6 +12,15 @@ class Helpers:
         self.database = Database()
 
 
+    async def clear_guild_commands(self):
+        guilds = []
+
+        for guild in self.bot.guilds:
+            await self.bot.bulk_overwrite_guild_commands(guild.id, [])
+            guilds.append(guild)
+
+        return guilds
+
     # Mocks a user's message by responding to it in "spongebob" case
     # after filtering out links and attachments
     async def mock_user(self, message):

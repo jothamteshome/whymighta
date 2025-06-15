@@ -75,11 +75,6 @@ async def on_guild_channel_delete(channel):
 for filename in os.listdir("./cogs"):
     if filename.endswith(".py"):
         name, ext = os.path.splitext(filename)
-
-        # Only load cog_manager in debug mode
-        if name == "cog_manager" and not config.DEBUG:
-            continue
-
         bot.load_extension(f"cogs.{name}")
 
 bot.run(TOKEN)
