@@ -6,7 +6,7 @@ import logging
 
 from asyncmy.cursors import DictCursor
 from core.config import config
-from whymightaSupportFunctions import md5_hash
+from utils.utilities import md5_hash
 
 logging.getLogger('asyncmy').setLevel(logging.ERROR)
 

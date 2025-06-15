@@ -2,7 +2,7 @@ import disnake
 
 import whymightaDatabase
 import whymightaGlobalVariables
-import whymightaSupportFunctions
+import utils.utilities as utilities
 import whymightaServerManagement
 import whymightaUtilities
 import whymightaHelp
@@ -20,8 +20,8 @@ TOKEN = config.DISCORD_TOKEN
 @whymightaGlobalVariables.bot.event
 async def on_ready():
     await whymightaDatabase.create_tables()
-    await whymightaSupportFunctions.updateNewMembers(whymightaGlobalVariables.bot)
-    await whymightaSupportFunctions.serverMessageCatchUp(whymightaGlobalVariables.bot)
+    await utilities.updateNewMembers(whymightaGlobalVariables.bot)
+    await utilities.serverMessageCatchUp(whymightaGlobalVariables.bot)
     print("Logged in as {0.user}".format(whymightaGlobalVariables.bot))
 
 
@@ -30,16 +30,16 @@ async def on_message(message):
     if message.author.bot is not True:
         if whymightaGlobalVariables.bot.user in message.mentions:
             await whymightaChatbot.chatting(message)
-        await whymightaSupportFunctions.give_user_message_xp(message, catchingUp=False)
-        await whymightaSupportFunctions.mock_user(message)
-        await whymightaSupportFunctions.binarize_message(message)
+        await utilities.give_user_message_xp(message, catchingUp=False)
+        await utilities.mock_user(message)
+        await utilities.binarize_message(message)
 
 
 @whymightaGlobalVariables.bot.event
 async def on_guild_join(guild):
     member_ids = [member.id for member in guild.members if not member.bot]
     
-    await whymightaDatabase.add_guild(guild.id, whymightaSupportFunctions.defaultGuildTextChannel(guild))
+    await whymightaDatabase.add_guild(guild.id, utilities.defaultGuildTextChannel(guild))
     await whymightaDatabase.add_users(member_ids, guild.id)
 
 
@@ -51,7 +51,7 @@ async def on_guild_remove(guild):
 @whymightaGlobalVariables.bot.event
 async def on_application_command(inter):
     await whymightaGlobalVariables.bot.process_application_commands(inter)
-    await whymightaSupportFunctions.give_user_inter_xp(inter, catchingUp=False)
+    await utilities.give_user_inter_xp(inter, catchingUp=False)
 
 
 @whymightaGlobalVariables.bot.event
@@ -69,6 +69,6 @@ async def on_guild_channel_delete(channel):
     bot_text_channel_id = await whymightaDatabase.get_bot_text_channel_id(channel.guild.id)
 
     if channel.id == bot_text_channel_id:
-        await whymightaDatabase.set_bot_text_channel_id(whymightaSupportFunctions.defaultGuildTextChannel(channel.guild))
+        await whymightaDatabase.set_bot_text_channel_id(utilities.defaultGuildTextChannel(channel.guild))
 
 whymightaGlobalVariables.bot.run(TOKEN)

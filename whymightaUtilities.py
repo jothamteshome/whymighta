@@ -4,7 +4,7 @@ import time
 
 import whymightaDatabase
 import whymightaGlobalVariables
-import whymightaSupportFunctions
+import utils.utilities as utilities
 
 
 @whymightaGlobalVariables.bot.slash_command()
@@ -30,7 +30,7 @@ async def level(inter):
     await inter.response.defer()
 
     curr_xp = await whymightaDatabase.current_user_score(inter.author.id, inter.guild_id)
-    curr_level = whymightaSupportFunctions.check_level(curr_xp)
+    curr_level = utilities.check_level(curr_xp)
 
     curr_level_split = str(curr_level).split(".")
 
@@ -53,11 +53,11 @@ async def jail(inter, name):
 
     if name in members:
         await inter.response.send_message("Generating Image...")
-        jailed_image = whymightaSupportFunctions.imprisonMember(members[name])
+        jailed_image = utilities.imprisonMember(members[name])
         await inter.edit_original_response(content="", file=jailed_image)
     elif name in nicknames:
         await inter.response.send_message("Generating Image...")
-        jailed_image = whymightaSupportFunctions.imprisonMember(nicknames[name])
+        jailed_image = utilities.imprisonMember(nicknames[name])
         await inter.edit_original_response(content="", file=jailed_image)
     else:
         await inter.response.send_message("User does not exist. Please try again with the user's discord name")

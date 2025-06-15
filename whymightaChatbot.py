@@ -3,7 +3,7 @@ import disnake
 import re
 import time
 import whymightaDatabase
-import whymightaSupportFunctions
+import utils.utilities as utilities
 import whymightaGlobalVariables
 
 from core.config import config
@@ -109,7 +109,7 @@ async def new_session(inter):
     existing_session_id = await whymightaDatabase.get_thread_id(inter.guild.id, inter.author.id)
 
     if existing_session_id:
-        await whymightaSupportFunctions.delete_thread(inter.guild, existing_session_id)
+        await utilities.delete_thread(inter.guild, existing_session_id)
 
     bot_channel_id = await whymightaDatabase.get_bot_text_channel_id(inter.guild.id)
     bot_channel = await whymightaGlobalVariables.bot.fetch_channel(bot_channel_id)
@@ -145,7 +145,7 @@ async def end_session(inter):
         return
 
     # Delete user's thread
-    thread_name = await whymightaSupportFunctions.delete_thread(inter.guild, author_thread_id)
+    thread_name = await utilities.delete_thread(inter.guild, author_thread_id)
 
     # If command sent from user's current thread session, do not attempt to send message thorugh it
     if isinstance(inter.channel, disnake.threads.Thread) and inter.channel.id == author_thread_id:

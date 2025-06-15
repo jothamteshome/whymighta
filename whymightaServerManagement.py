@@ -4,7 +4,7 @@ import random
 
 import whymightaGlobalVariables
 import whymightaDatabase
-import whymightaSupportFunctions
+import utils.utilities as utilities
 
 from io import BytesIO
 
@@ -59,7 +59,7 @@ async def clear(inter, number: int = 5):
     if number < 1 or number > 100:
         await inter.response.send_message("Error clearing messages from channel")
     else:
-        await whymightaSupportFunctions.clearMessage(inter, number)
+        await utilities.clearMessage(inter, number)
         await inter.channel.purge(limit=number+1)
 
 
