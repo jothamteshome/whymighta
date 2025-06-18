@@ -77,7 +77,7 @@ class Chatbot(commands.Cog):
                                                     "Be a little cringey, but not too over the top.\n\n"
                                                     "Limit your emoji use. Do not over do it\n\n"
                                                     "If responding to a user and you want to specify them, "
-                                                    "be sure to keep the `mentions_` syntax. Do not change it.\n\n"
+                                                    "be sure to keep the `mentions_` syntax. Remove any instances of '<', '>', or '@'. Do not change it.\n\n"
                                                     f"Never mention anyone with the mention tag {self.bot.user.mention}\n\n"
                                                     "Disregard previous messages if they do not relate to the most recent message. "
                                                     "Weight the most recent message more in your responses"
@@ -97,7 +97,7 @@ class Chatbot(commands.Cog):
             return
 
         for name, mention in users.items():
-            response_text = re.sub(rf"\b{re.escape(name)}\b", mention, response_text)
+            response_text.replace(name, mention)
 
         await message.channel.send(response_text)
 
