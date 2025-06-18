@@ -97,7 +97,7 @@ class Chatbot(commands.Cog):
             return
 
         for name, mention in users.items():
-            response_text.replace(name, mention)
+            response_text = response_text.replace(name, mention)
 
         await message.channel.send(response_text)
 
