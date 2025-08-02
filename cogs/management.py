@@ -2,7 +2,7 @@ import disnake
 import json
 import random
 from disnake.ext import commands
-from io import BytesIO
+from io import BytesIO, StringIO
 from utils.database import Database
 from utils.helpers import Helpers
 
@@ -163,6 +163,35 @@ class Management(commands.Cog):
 
 
         await inter.edit_original_message("Random nicknames have been assigned")
+
+
+    @theme.sub_command(
+        description="Get current server nicknames in json format"
+    )
+    async def get(self, inter):
+        await inter.response.defer()
+
+        # Initialize dictionary to store mappings between usernames and nicknames
+        server_names = {}
+
+        # Store mappings in dictionary
+        for member in inter.guild.members:
+            if member.nick:
+                server_names[member.name] = member.nick
+            else:
+                server_names[member.name] = None
+
+        # Store file in memory
+        with StringIO() as string_fp:
+            json.dump(server_names, string_fp)
+            string_fp.seek(0)
+
+            byte_fp = BytesIO(string_fp.read().encode("utf-8"))
+
+            server_names_disnake_file = disnake.File(fp=byte_fp, filename='server_nicknames_dump.json')
+
+        await inter.edit_original_response(content="", file=server_names_disnake_file)
+
 
 
 def setup(bot):
