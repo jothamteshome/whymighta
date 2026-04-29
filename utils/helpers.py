@@ -4,12 +4,11 @@ import math
 import requests
 
 from PIL import Image
-from utils.database import Database
 
 class Helpers:
     def __init__(self, bot):
         self.bot = bot
-        self.database = Database()
+        self.database = self.bot.db
 
 
     async def clear_guild_commands(self):

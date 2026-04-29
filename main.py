@@ -1,22 +1,30 @@
+import asyncio
 import os
 import disnake
 from core.config import config
 from disnake.ext import commands
+from utils.db_client import AsyncDatabaseClient
 from utils.database import Database
 from utils.helpers import Helpers
 
-# Retrieve bot token from database
-TOKEN = config.DISCORD_TOKEN
-
 # Instantiate a Discord client
 bot = commands.InteractionBot(intents=disnake.Intents.all())
-database = Database()
+
+_client = AsyncDatabaseClient(
+    host=config.DB_HOST,
+    user=config.DB_USERNAME,
+    password=config.DB_PASSWORD,
+    db=config.DB_DATABASE,
+    port=config.DB_PORT,
+)
+database = Database(client=_client)
+bot.db = database
+
 helpers = Helpers(bot)
 
 
 @bot.event
 async def on_ready():
-    await database.create_tables()
     await helpers.update_new_members()
     await helpers.server_message_catchup()
     print(f"Logged in as {bot.user}")
@@ -60,7 +68,7 @@ async def on_member_join(member):
 
 @bot.event
 async def on_member_remove(member):
-    await database.removeUser(member.id, member.guild.id)
+    await database.remove_user(member.id, member.guild.id)
 
 
 @bot.event
@@ -77,4 +85,13 @@ for filename in os.listdir("./cogs"):
         name, ext = os.path.splitext(filename)
         bot.load_extension(f"cogs.{name}")
 
-bot.run(TOKEN)
+
+async def main():
+    await database.init_pool()
+    await database.create_tables()
+    try:
+        await bot.start(config.DISCORD_TOKEN)
+    finally:
+        await database.close_pool()
+
+asyncio.run(main())

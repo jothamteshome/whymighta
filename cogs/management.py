@@ -3,14 +3,14 @@ import json
 import random
 from disnake.ext import commands
 from io import BytesIO, StringIO
-from utils.database import Database
+
 from utils.helpers import Helpers
 
 
 class Management(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.database = Database()
+        self.database = self.bot.db
         self.helpers = Helpers(self.bot)
 
     @commands.slash_command(

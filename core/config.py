@@ -1,22 +1,20 @@
-import os
-from dotenv import load_dotenv
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
-load_dotenv(override=True)
 
-class Config:
-    def __init__(self):
-        self.MYSQL_USERNAME = os.getenv('MYSQL_USERNAME')
-        self.MYSQL_PASSWORD = os.getenv('MYSQL_PASSWORD')
-        self.MYSQL_HOST = os.getenv('MYSQL_HOST')
-        self.MYSQL_PORT = os.getenv('MYSQL_PORT')
-        self.MYSQL_DATABASE = os.getenv('MYSQL_DATABASE')
-        self.ENCRYPTION_KEY = os.getenv('ENCRYPTION_KEY')
+class Config(BaseSettings):
+    model_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8')
 
-        self.AWS_CHATGPT_API_URL = os.getenv('AWS_CHATGPT_API_URL')
-        self.AWS_CHATGPT_API_KEY = os.getenv('AWS_CHATGPT_API_KEY')
+    DB_USERNAME: str
+    DB_PASSWORD: str
+    DB_HOST: str
+    DB_PORT: int
+    DB_DATABASE: str
 
-        self.WEATHER_API_KEY = os.getenv('WEATHER_API_KEY')
+    AWS_CHATGPT_API_URL: str
+    AWS_CHATGPT_API_KEY: str
 
-        self.DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
+    WEATHER_API_KEY: str
+
+    DISCORD_TOKEN: str
 
 config = Config()

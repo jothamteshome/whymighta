@@ -1,13 +1,13 @@
 import random
 from disnake import Embed
 from disnake.ext import commands
-from utils.database import Database
+
 
 
 class Games(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.database = Database()
+        self.database = self.bot.db
 
     @commands.slash_command()
     async def games(self, inter):

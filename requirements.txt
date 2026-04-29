@@ -1,7 +1,6 @@
-asyncmy
-cryptography
+asyncpg
 disnake
 pillow
 pynacl
-python-dotenv
+pydantic-settings
 requests
