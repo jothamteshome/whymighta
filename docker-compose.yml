@@ -1,0 +1,23 @@
+services:
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: whymighta_user
+      POSTGRES_PASSWORD: whymighta_password
+      POSTGRES_DB: whymighta_db
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U whymighta_user -d whymighta_db"]
+      interval: 5s
+      retries: 5
+
+  whymighta:
+    build: .
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
