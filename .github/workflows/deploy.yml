@@ -59,7 +59,7 @@ jobs:
             "cd /opt/infrastructure/cloud/perpetual-app-host",
             "git pull origin main",
             "docker compose pull whymighta",
-            "docker compose up -d whymighta"
+            "docker compose up -d --no-deps whymighta"
           ]}' \
           --comment "Deploy whymighta" \
           --query "Command.CommandId" \
