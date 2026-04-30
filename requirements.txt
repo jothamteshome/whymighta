@@ -1,5 +1,4 @@
 asyncpg
-awscli
 disnake
 pillow
 pynacl
