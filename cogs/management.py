@@ -27,7 +27,7 @@ class Management(commands.Cog):
     @commands.is_owner()
     async def clear_app_commands(self, inter):
         await inter.response.defer(ephemeral=True)
-        guilds = await self.helpers.clear_guild_commands()
+        guilds = await inter.bot.helpers.clear_guild_commands()
 
         embed = disnake.Embed(title="Guilds Cleared", description=f"\n{'-' * 25}", color=0x9534eb)
 
@@ -47,7 +47,7 @@ class Management(commands.Cog):
     async def set(self, inter):
         await inter.response.defer()    
 
-        await self.database.set_bot_text_channel_id(inter.guild.id, inter.channel.id)
+        await inter.bot.db.set_bot_text_channel_id(inter.guild.id, inter.channel.id)
 
         await inter.edit_original_message(f"Bot messages will now appear in {inter.channel.name}!")
 
@@ -59,7 +59,7 @@ class Management(commands.Cog):
         await inter.response.defer()
         
 
-        bot_channel_id = await self.database.get_bot_text_channel_id(inter.guild.id)
+        bot_channel_id = await inter.bot.db.get_bot_text_channel_id(inter.guild.id)
         bot_channel = None
 
 
@@ -95,7 +95,7 @@ class Management(commands.Cog):
     async def mock(self, inter):
         await inter.response.defer()
 
-        if await self.database.toggle_mock(inter.guild_id):
+        if await inter.bot.db.toggle_mock(inter.guild_id):
             await inter.edit_original_message("Mocking has been enabled")
         else:
             await inter.edit_original_message("Mocking has been disabled")
@@ -105,7 +105,7 @@ class Management(commands.Cog):
     async def binary(self, inter):
         await inter.response.defer()
 
-        if await self.database.toggle_binary(inter.guild_id):
+        if await inter.bot.db.toggle_binary(inter.guild_id):
             await inter.edit_original_message("Binary has been enabled")
         else:
             await inter.edit_original_message("Binary has been disabled")

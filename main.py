@@ -21,6 +21,7 @@ database = Database(client=_client)
 bot.db = database
 
 helpers = Helpers(bot)
+bot.helpers = helpers
 
 
 @bot.event
