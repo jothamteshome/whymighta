@@ -18,6 +18,10 @@ if [ "$ENV" = "production" ]; then
     export WEATHER_API_KEY=$(aws ssm get-parameter --name "/whymighta/api/weather/key" --with-decryption --query "Parameter.Value" --output text)
     export DISCORD_TOKEN=$(aws ssm get-parameter --name "/whymighta/discord/token" --with-decryption --query "Parameter.Value" --output text)
     echo "All environment variables set!"
+
+    echo "Creating database if not exists..."
+    psql "postgresql://$DB_USERNAME:$DB_PASSWORD@$DB_HOST:$DB_PORT/postgres" \
+        -c "CREATE DATABASE \"$DB_DATABASE\";" 2>/dev/null || true
 fi
 
 exec python main.py

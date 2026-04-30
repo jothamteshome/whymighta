@@ -23,6 +23,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libsodium23 \
         libjpeg62-turbo \
         zlib1g \
+        postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /install /usr/local
