@@ -3,8 +3,8 @@ set -e
 
 if [ "$ENV" = "production" ]; then
     echo "Creating database if not exists..."
-    psql "postgresql://$DB_USERNAME:$DB_PASSWORD@$DB_HOST:$DB_PORT/postgres" \
-        -c "CREATE DATABASE \"$DB_DATABASE\";" || true
+    PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USERNAME" -d postgres \
+    -c "CREATE DATABASE \"$DB_DATABASE\";" || true
 fi
 
 exec python main.py
