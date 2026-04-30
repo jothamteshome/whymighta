@@ -2,14 +2,14 @@ import math
 import time
 from disnake import Embed
 from disnake.ext import commands
-from utils.database import Database
+
 from utils.helpers import Helpers
 
 
 class Utilities(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.database = Database()
+        self.database = self.bot.db
         self.helpers = Helpers(self.bot)
 
 

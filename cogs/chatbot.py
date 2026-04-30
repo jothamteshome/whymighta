@@ -5,14 +5,14 @@ import time
 from core.config import config
 from datetime import datetime, timedelta, timezone
 from disnake.ext import commands
-from utils.database import Database
+
 from utils.helpers import Helpers
 
 
 class Chatbot(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.database = Database()
+        self.database = self.bot.db
         self.helpers = Helpers(self.bot)
 
 
