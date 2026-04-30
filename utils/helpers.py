@@ -169,7 +169,10 @@ class Helpers:
         for guild in self.bot.guilds:
 
             # Retrieve the time of the last message the bot saw
-            last_server_message_time = await self.database.query_last_message_sent(guild.id)
+            last_server_message_time = max(
+                await self.database.query_last_message_sent(guild.id),
+                guild.created_at
+            )
 
             # Initialize the latest message time
             latest_message_time = last_server_message_time
