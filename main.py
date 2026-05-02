@@ -1,13 +1,19 @@
 import asyncio
+import logging
 import os
-import disnake
-from core.config import config
-from disnake.ext import commands
-from utils.db_client import AsyncDatabaseClient
-from utils.database import Database
-from utils.helpers import Helpers
 
-# Instantiate a Discord client
+import disnake
+from disnake.ext import commands
+
+from core.config import config
+from database.client import AsyncDatabaseClient
+from database.manager import Database
+from utils import message_modes, startup, xp
+from utils.logging_config import configure_logger
+
+configure_logger()
+logger = logging.getLogger(__name__)
+
 bot = commands.InteractionBot(intents=disnake.Intents.all())
 
 _client = AsyncDatabaseClient(
@@ -20,64 +26,77 @@ _client = AsyncDatabaseClient(
 database = Database(client=_client)
 bot.db = database
 
-helpers = Helpers(bot)
-bot.helpers = helpers
+
+@bot.event
+async def on_ready() -> None:
+    await startup.update_new_members(bot, database)
+    await startup.server_message_catchup(bot, database)
+    logger.info("Logged in as %s", bot.user)
 
 
 @bot.event
-async def on_ready():
-    await helpers.update_new_members()
-    await helpers.server_message_catchup()
-    print(f"Logged in as {bot.user}")
-
-
-@bot.event
-async def on_message(message):
+async def on_message(message: disnake.Message) -> None:
     if message.author.bot is not True:
         if bot.user in message.mentions:
             cog = bot.get_cog("Chatbot")
             if cog:
                 await cog.chatting(message)
-        await helpers.give_user_message_xp(message, catchingUp=False)
-        await helpers.mock_user(message)
-        await helpers.binarize_message(message)
+        await xp.give_message_xp(database, bot, message, catching_up=False)
+        await message_modes.mock_user(database, message)
+        await message_modes.binarize_message(database, message)
 
 
 @bot.event
-async def on_guild_join(guild):
+async def on_guild_join(guild: disnake.Guild) -> None:
     member_ids = [member.id for member in guild.members if not member.bot]
-    
-    await database.add_guild(guild.id, helpers.default_guild_text_channel(guild))
+    default_channel_id = guild.text_channels[0].id if guild.text_channels else None
+    await database.add_guild(guild.id, default_channel_id)
     await database.add_users(member_ids, guild.id)
+    logger.info("Joined guild %d (%s): %d members", guild.id, guild.name, len(member_ids))
 
 
 @bot.event
-async def on_guild_remove(guild):
+async def on_guild_remove(guild: disnake.Guild) -> None:
     await database.remove_guild(guild.id)
+    logger.info("Removed from guild %d (%s)", guild.id, guild.name)
 
 
 @bot.event
-async def on_application_command(inter):
+async def on_application_command(inter: disnake.ApplicationCommandInteraction) -> None:
     await bot.process_application_commands(inter)
-    await helpers.give_user_inter_xp(inter, catchingUp=False)
+    await xp.give_inter_xp(database, bot, inter, catching_up=False)
 
 
 @bot.event
-async def on_member_join(member):
+async def on_member_join(member: disnake.Member) -> None:
     await database.add_user(member.id, member.guild.id)
+    logger.info("Member joined: user=%d guild=%d", member.id, member.guild.id)
 
 
 @bot.event
-async def on_member_remove(member):
+async def on_member_remove(member: disnake.Member) -> None:
     await database.remove_user(member.id, member.guild.id)
+    logger.info("Member left: user=%d guild=%d", member.id, member.guild.id)
 
 
 @bot.event
-async def on_guild_channel_delete(channel):
+async def on_guild_channel_delete(channel: disnake.abc.GuildChannel) -> None:
     bot_text_channel_id = await database.get_bot_text_channel_id(channel.guild.id)
-
     if channel.id == bot_text_channel_id:
-        await database.set_bot_text_channel_id(helpers.default_guild_text_channel(channel.guild))
+        default_channel_id = channel.guild.text_channels[0].id if channel.guild.text_channels else None
+        if default_channel_id is None:
+            logger.warning(
+                "Bot channel deleted in guild %d (%s) and no fallback text channel exists",
+                channel.guild.id,
+                channel.guild.name,
+            )
+        else:
+            logger.info(
+                "Bot channel deleted in guild %d; falling back to channel %d",
+                channel.guild.id,
+                default_channel_id,
+            )
+        await database.set_bot_text_channel_id(channel.guild.id, default_channel_id)
 
 
 # Load cogs from the 'cogs' directory
@@ -87,7 +106,7 @@ for filename in os.listdir("./cogs"):
         bot.load_extension(f"cogs.{name}")
 
 
-async def main():
+async def main() -> None:
     await database.init_pool()
     await database.create_tables()
     try:
@@ -95,4 +114,6 @@ async def main():
     finally:
         await database.close_pool()
 
-asyncio.run(main())
+
+if __name__ == "__main__":
+    asyncio.run(main())

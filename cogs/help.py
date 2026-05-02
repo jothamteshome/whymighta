@@ -1,19 +1,21 @@
+import logging
+
+import disnake
 from disnake.ext import commands
+
+logger = logging.getLogger(__name__)
 
 
 class Help(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
+    def __init__(self, bot: commands.InteractionBot) -> None:
+        self.bot: commands.InteractionBot = bot
 
-    
-    @commands.slash_command(
-            description="Descriptions of bot commands"
-    )
-    async def help(self, inter):
+    @commands.slash_command(description="Descriptions of bot commands")
+    async def help(self, inter: disnake.ApplicationCommandInteraction) -> None:
         await inter.response.send_message("WIP")
 
 
-def setup(bot):
+def setup(bot: commands.InteractionBot) -> None:
     bot.add_cog(Help(bot))
 
 
