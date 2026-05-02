@@ -96,6 +96,13 @@ class Chatbot(commands.Cog):
         response_code, response_text = await self.call_lambda(json_payload)
 
         if response_code != 200:
+            logger.warning(
+                "Lambda returned %d for user %d in guild %d: %s",
+                response_code,
+                message.author.id,
+                message.guild.id,
+                response_text,
+            )
             await message.channel.send(f"Could not process API request: {response_text}. Please contact administrator or try again.")
             return
 
@@ -135,6 +142,13 @@ class Chatbot(commands.Cog):
 
         # Store thread in database
         await self.database.set_thread_id(thread.id, inter.guild.id, inter.author.id)
+        logger.info(
+            "Created thread '%s' (id=%d) for user %d in guild %d",
+            thread.name,
+            thread.id,
+            inter.author.id,
+            inter.guild.id,
+        )
 
         # Make bot join new private thread
         await thread.join()
@@ -166,6 +180,12 @@ class Chatbot(commands.Cog):
         if thread:
             await thread.delete()
         await self.database.remove_thread_id(author_thread_id)
+        logger.info(
+            "Deleted thread '%s' for user %d in guild %d",
+            thread_name,
+            inter.author.id,
+            inter.guild.id,
+        )
 
         # If command sent from user's current thread session, do not attempt to send message thorugh it
         if isinstance(inter.channel, disnake.threads.Thread) and inter.channel.id == author_thread_id:

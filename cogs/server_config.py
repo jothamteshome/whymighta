@@ -26,6 +26,7 @@ class ServerConfig(commands.Cog):
     async def use(self, inter: disnake.ApplicationCommandInteraction) -> None:
         await inter.response.defer()
         await self.database.set_bot_text_channel_id(inter.guild.id, inter.channel.id)
+        logger.info("Bot channel set to %d in guild %d", inter.channel.id, inter.guild.id)
         await inter.edit_original_message(f"Bot messages will now appear in {inter.channel.name}!")
 
     @bot_channel.sub_command(description="Get name of current bot channel")
@@ -56,7 +57,9 @@ class ServerConfig(commands.Cog):
     @toggle.sub_command(description="Toggles the mock status of the bot")
     async def mock(self, inter: disnake.ApplicationCommandInteraction) -> None:
         await inter.response.defer()
-        if await self.database.toggle_mock(inter.guild_id):
+        enabled = await self.database.toggle_mock(inter.guild_id)
+        logger.info("Mock toggled to %s in guild %d", enabled, inter.guild_id)
+        if enabled:
             await inter.edit_original_message("Mocking has been enabled")
         else:
             await inter.edit_original_message("Mocking has been disabled")
@@ -64,7 +67,9 @@ class ServerConfig(commands.Cog):
     @toggle.sub_command(description="Toggles the binary writing status of the bot")
     async def binary(self, inter: disnake.ApplicationCommandInteraction) -> None:
         await inter.response.defer()
-        if await self.database.toggle_binary(inter.guild_id):
+        enabled = await self.database.toggle_binary(inter.guild_id)
+        logger.info("Binary toggled to %s in guild %d", enabled, inter.guild_id)
+        if enabled:
             await inter.edit_original_message("Binary has been enabled")
         else:
             await inter.edit_original_message("Binary has been disabled")

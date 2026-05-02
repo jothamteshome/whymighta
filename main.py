@@ -52,11 +52,13 @@ async def on_guild_join(guild: disnake.Guild) -> None:
     default_channel_id = guild.text_channels[0].id if guild.text_channels else None
     await database.add_guild(guild.id, default_channel_id)
     await database.add_users(member_ids, guild.id)
+    logger.info("Joined guild %d (%s): %d members", guild.id, guild.name, len(member_ids))
 
 
 @bot.event
 async def on_guild_remove(guild: disnake.Guild) -> None:
     await database.remove_guild(guild.id)
+    logger.info("Removed from guild %d (%s)", guild.id, guild.name)
 
 
 @bot.event
@@ -68,11 +70,13 @@ async def on_application_command(inter: disnake.ApplicationCommandInteraction) -
 @bot.event
 async def on_member_join(member: disnake.Member) -> None:
     await database.add_user(member.id, member.guild.id)
+    logger.info("Member joined: user=%d guild=%d", member.id, member.guild.id)
 
 
 @bot.event
 async def on_member_remove(member: disnake.Member) -> None:
     await database.remove_user(member.id, member.guild.id)
+    logger.info("Member left: user=%d guild=%d", member.id, member.guild.id)
 
 
 @bot.event
@@ -80,6 +84,18 @@ async def on_guild_channel_delete(channel: disnake.abc.GuildChannel) -> None:
     bot_text_channel_id = await database.get_bot_text_channel_id(channel.guild.id)
     if channel.id == bot_text_channel_id:
         default_channel_id = channel.guild.text_channels[0].id if channel.guild.text_channels else None
+        if default_channel_id is None:
+            logger.warning(
+                "Bot channel deleted in guild %d (%s) and no fallback text channel exists",
+                channel.guild.id,
+                channel.guild.name,
+            )
+        else:
+            logger.info(
+                "Bot channel deleted in guild %d; falling back to channel %d",
+                channel.guild.id,
+                default_channel_id,
+            )
         await database.set_bot_text_channel_id(channel.guild.id, default_channel_id)
 
 

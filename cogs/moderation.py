@@ -19,6 +19,13 @@ class Moderation(commands.Cog):
             await inter.response.send_message("Number must be between 1 and 100.")
             return
         message_str = "message" if number == 1 else "messages"
+        logger.info(
+            "Purge: %d messages in channel %d (guild %d) by user %d",
+            number,
+            inter.channel.id,
+            inter.guild.id,
+            inter.author.id,
+        )
         await inter.response.send_message(f"{inter.author} cleared {number} {message_str} from the channel")
         await inter.channel.purge(limit=number + 1)
 
