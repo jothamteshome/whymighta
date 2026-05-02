@@ -167,10 +167,9 @@ class Management(commands.Cog):
         for member in members:
             new_nick = new_nicks.pop()
 
-            # Skip members the bot cannot edit due to role hierarchy or ownership.
-            # The bot can always edit its own nickname, so exempt it from the check.
-            is_self = member == inter.guild.me
-            if not is_self and (member == inter.guild.owner or inter.guild.me.top_role <= member.top_role):
+            # Skip human members the bot cannot edit due to role hierarchy or ownership.
+            # Bots bypass this check — let Discord reject with Forbidden if needed.
+            if not member.bot and (member == inter.guild.owner or inter.guild.me.top_role <= member.top_role):
                 logger.debug("Skipping %s (role hierarchy)", member.name)
                 skipped.append((member.name, new_nick))
                 continue
@@ -178,7 +177,10 @@ class Management(commands.Cog):
             try:
                 await asyncio.wait_for(member.edit(nick=new_nick), timeout=60)
                 logger.debug("Assigned %s -> %s", member.name, new_nick)
-            except (asyncio.TimeoutError, disnake.errors.Forbidden, disnake.errors.HTTPException) as e:
+            except disnake.errors.Forbidden as e:
+                logger.debug("Could not set nick for %s (no permission): %s", member.name, e)
+                skipped.append((member.name, new_nick))
+            except (asyncio.TimeoutError, disnake.errors.HTTPException) as e:
                 logger.warning("Could not set nick for %s: %s", member.name, e)
                 skipped.append((member.name, new_nick))
 
