@@ -129,8 +129,12 @@ class Management(commands.Cog):
         
         # Store file in memory and open it
         fp = BytesIO()
+        print("Starting file download...")
         await file.save(fp)
+        print(f"File downloaded, buffer position: {fp.tell()}")
+        # fp.seek(0)
         server_structure = json.load(fp)
+        print(f"JSON loaded, {len(server_structure.get('names', []))} names, {len(inter.guild.members)} members")
 
         # Check that required names field exists in JSON file
         if "names" not in server_structure:
@@ -153,11 +157,14 @@ class Management(commands.Cog):
         # Assign new names to each user
         for member in inter.guild.members:
             new_nick = new_nicks.pop()
+            print(f"Setting nick for {member.name}...")
 
             # If bot does not have permission to assign a name, send the names as a message
             try:
                 await member.edit(nick=new_nick)
+                print(f"Done: {member.name} -> {new_nick}")
             except disnake.errors.Forbidden:
+                print(f"Forbidden: {member.name}")
                 await inter.channel.send(f"{member.name} - {new_nick}")
                 continue
 
