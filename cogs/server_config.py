@@ -17,19 +17,20 @@ class ServerConfig(commands.Cog):
     # ---- /bot_channel ----
 
     @commands.slash_command(
+        name="bot_channel",
         default_member_permissions=disnake.Permissions(administrator=True)
     )
-    async def bot_channel(self, inter: disnake.ApplicationCommandInteraction) -> None:
+    async def channel(self, inter: disnake.ApplicationCommandInteraction) -> None:
         pass
 
-    @bot_channel.sub_command(description="Set a new channel as the default bot channel")
+    @channel.sub_command(description="Set a new channel as the default bot channel")
     async def use(self, inter: disnake.ApplicationCommandInteraction) -> None:
         await inter.response.defer()
         await self.database.set_bot_text_channel_id(inter.guild.id, inter.channel.id)
         logger.info("Bot channel set to %d in guild %d", inter.channel.id, inter.guild.id)
         await inter.edit_original_message(f"Bot messages will now appear in {inter.channel.name}!")
 
-    @bot_channel.sub_command(description="Get name of current bot channel")
+    @channel.sub_command(description="Get name of current bot channel")
     async def show(self, inter: disnake.ApplicationCommandInteraction) -> None:
         await inter.response.defer()
 
