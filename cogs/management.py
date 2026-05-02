@@ -1,11 +1,14 @@
 import asyncio
 import disnake
 import json
+import logging
 import random
 from disnake.ext import commands
 from io import BytesIO, StringIO
 
 from utils.helpers import Helpers
+
+logger = logging.getLogger(__name__)
 
 
 class Management(commands.Cog):
@@ -127,58 +130,61 @@ class Management(commands.Cog):
         if 'application/json' not in file.content_type:
             await inter.edit_original_message("File must be a json")
             return
-        
+
         # Store file in memory and open it
         fp = BytesIO()
-        print("Starting file download...")
+        logger.debug("Starting file download")
         await file.save(fp)
-        print(f"File downloaded, buffer position: {fp.tell()}")
         fp.seek(0)
         server_structure = json.load(fp)
-        print(f"JSON loaded, {len(server_structure.get('names', []))} names, {len(inter.guild.members)} members")
 
         # Check that required names field exists in JSON file
         if "names" not in server_structure:
             await inter.edit_original_message("Please make sure `names` key exists in JSON")
             return
-        elif "names" in server_structure and "list" not in str(type(server_structure['names'])):
+        elif not isinstance(server_structure['names'], list):
             await inter.edit_original_message("Please make sure the value of `names` is a list")
             return
 
-        
-        if len(server_structure["names"]) < len(inter.guild.members):
-            await inter.edit_original_message(f"Please provide enough names to allocate one for each member in server ({len(inter.guild.members) - len(server_structure['names'])} more required)")
+        members = inter.guild.members
+
+        if len(server_structure["names"]) < len(members):
+            await inter.edit_original_message(
+                f"Please provide enough names to allocate one for each member in server "
+                f"({len(members) - len(server_structure['names'])} more required)"
+            )
             return
-        
+
+        logger.debug("JSON loaded: %d names, %d members", len(server_structure['names']), len(members))
 
         # Shuffle list of names
         new_nicks = server_structure['names']
         random.shuffle(new_nicks)
 
-        # Assign new names to each user
-        for member in inter.guild.members:
-            new_nick = new_nicks.pop()
-            print(f"Setting nick for {member.name}...")
+        skipped: list[tuple[str, str]] = []
 
-            # If bot does not have permission to assign a name, send the names as a message
+        # Assign new names to each user
+        for member in members:
+            new_nick = new_nicks.pop()
+
+            # Skip members the bot cannot edit due to role hierarchy or ownership
+            if member == inter.guild.owner or inter.guild.me.top_role <= member.top_role:
+                logger.debug("Skipping %s (role hierarchy)", member.name)
+                skipped.append((member.name, new_nick))
+                continue
+
             try:
                 await asyncio.wait_for(member.edit(nick=new_nick), timeout=10)
-                print(f"Done: {member.name} -> {new_nick}")
-            except asyncio.TimeoutError:
-                print(f"Timeout: {member.name}")
-                await inter.channel.send(f"{member.name} - {new_nick}")
-                continue
-            except disnake.errors.Forbidden:
-                print(f"Forbidden: {member.name}")
-                await inter.channel.send(f"{member.name} - {new_nick}")
-                continue
-            except disnake.errors.HTTPException as e:
-                print(f"HTTPException for {member.name}: {e}")
-                await inter.channel.send(f"{member.name} - {new_nick}")
-                continue
-
+                logger.debug("Assigned %s -> %s", member.name, new_nick)
+            except (asyncio.TimeoutError, disnake.errors.Forbidden, disnake.errors.HTTPException) as e:
+                logger.warning("Could not set nick for %s: %s", member.name, e)
+                skipped.append((member.name, new_nick))
 
         await inter.edit_original_message("Random nicknames have been assigned")
+
+        if skipped:
+            lines = "\n".join(f"`{name}` — {nick}" for name, nick in skipped)
+            await inter.channel.send(f"**Could not assign nicknames for:**\n{lines}")
 
 
     @theme.sub_command(
