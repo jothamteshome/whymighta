@@ -1,3 +1,4 @@
+import asyncio
 import disnake
 import json
 import random
@@ -132,7 +133,7 @@ class Management(commands.Cog):
         print("Starting file download...")
         await file.save(fp)
         print(f"File downloaded, buffer position: {fp.tell()}")
-        # fp.seek(0)
+        fp.seek(0)
         server_structure = json.load(fp)
         print(f"JSON loaded, {len(server_structure.get('names', []))} names, {len(inter.guild.members)} members")
 
@@ -161,10 +162,18 @@ class Management(commands.Cog):
 
             # If bot does not have permission to assign a name, send the names as a message
             try:
-                await member.edit(nick=new_nick)
+                await asyncio.wait_for(member.edit(nick=new_nick), timeout=10)
                 print(f"Done: {member.name} -> {new_nick}")
+            except asyncio.TimeoutError:
+                print(f"Timeout: {member.name}")
+                await inter.channel.send(f"{member.name} - {new_nick}")
+                continue
             except disnake.errors.Forbidden:
                 print(f"Forbidden: {member.name}")
+                await inter.channel.send(f"{member.name} - {new_nick}")
+                continue
+            except disnake.errors.HTTPException as e:
+                print(f"HTTPException for {member.name}: {e}")
                 await inter.channel.send(f"{member.name} - {new_nick}")
                 continue
 
