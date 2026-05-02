@@ -1,6 +1,17 @@
 services:
   postgres:
-    image: postgres:18
+    container_name: postgres
+    image: postgres:18-alpine
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     environment:
       POSTGRES_USER: whymighta_user
       POSTGRES_PASSWORD: whymighta_password
@@ -13,7 +24,18 @@ services:
       retries: 5
 
   whymighta:
+    container_name: whymighta
     build: .
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     env_file: .env
     depends_on:
       postgres:
