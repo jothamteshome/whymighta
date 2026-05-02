@@ -69,7 +69,7 @@ class Theme(commands.Cog):
                 continue
 
             try:
-                await asyncio.wait_for(member.edit(nick=new_nick), timeout=60)
+                await asyncio.wait_for(member.edit(nick=new_nick), timeout=10)
                 logger.debug("Assigned %s -> %s", member.name, new_nick)
                 await asyncio.sleep(0.5)
             except disnake.errors.Forbidden as e:
