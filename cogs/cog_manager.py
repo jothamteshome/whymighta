@@ -1,10 +1,15 @@
+import logging
 import os
+
 from disnake import ApplicationCommandInteraction, Embed
 from disnake.ext import commands
 
+logger = logging.getLogger(__name__)
+
+
 class CogManager(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
+    def __init__(self, bot: commands.InteractionBot) -> None:
+        self.bot: commands.InteractionBot = bot
 
     @commands.slash_command(description="Manage cogs (bot owner only)")
     @commands.is_owner()
@@ -81,5 +86,5 @@ class CogManager(commands.Cog):
             await inter.edit_original_message(f"Failed to reload cog: {e}")
 
 
-def setup(bot):
+def setup(bot: commands.InteractionBot) -> None:
     bot.add_cog(CogManager(bot))

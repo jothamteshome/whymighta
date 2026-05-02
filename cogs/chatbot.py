@@ -1,22 +1,23 @@
 import aiohttp
 import disnake
-import re
+import logging
 import time
 from core.config import config
 from datetime import datetime, timedelta, timezone
 from disnake.ext import commands
 
-from utils.helpers import Helpers
+from database.manager import Database
+
+logger = logging.getLogger(__name__)
 
 
 class Chatbot(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
-        self.database = self.bot.db
-        self.helpers = Helpers(self.bot)
+    def __init__(self, bot: commands.InteractionBot) -> None:
+        self.bot: commands.InteractionBot = bot
+        self.database: Database = bot.db
 
 
-    async def call_lambda(self, payload):
+    async def call_lambda(self, payload: dict) -> tuple[int, str]:
         headers = {
             "x-api-key": config.AWS_CHATGPT_API_KEY,
             "Content-Type": "application/json"
@@ -35,7 +36,9 @@ class Chatbot(commands.Cog):
 
 
 
-    async def get_last_messages(self, channel, num_msgs=5):
+    async def get_last_messages(
+        self, channel: disnake.TextChannel, num_msgs: int = 5
+    ) -> tuple[list[dict], dict[str, str]]:
         messages = []
         users = {}
 
@@ -64,7 +67,7 @@ class Chatbot(commands.Cog):
         return messages[::-1], users
 
 
-    async def chatting(self, message):
+    async def chatting(self, message: disnake.Message) -> None:
         json_payload =  {
                             "messages": 
                             [
@@ -103,19 +106,22 @@ class Chatbot(commands.Cog):
 
 
     @commands.slash_command()
-    async def chat(self, inter):
+    async def chat(self, inter: disnake.ApplicationCommandInteraction) -> None:
         pass
 
 
     @chat.sub_command(description="Create thread session to communicate with bot alone")
-    async def new_session(self, inter):
+    async def new_session(self, inter: disnake.ApplicationCommandInteraction) -> None:
         await inter.response.defer(ephemeral=True)
 
         # Get existing thread id or None
         existing_session_id = await self.database.get_thread_id(inter.guild.id, inter.author.id)
 
         if existing_session_id:
-            await self.helpers.delete_thread(inter.guild, existing_session_id)
+            thread = inter.guild.get_thread(existing_session_id)
+            if thread:
+                await thread.delete()
+            await self.database.remove_thread_id(existing_session_id)
 
         bot_channel_id = await self.database.get_bot_text_channel_id(inter.guild.id)
         bot_channel = await self.bot.fetch_channel(bot_channel_id)
@@ -145,7 +151,7 @@ class Chatbot(commands.Cog):
 
 
     @chat.sub_command(description="Delete thread session")
-    async def end_session(self, inter):
+    async def end_session(self, inter: disnake.ApplicationCommandInteraction) -> None:
         await inter.response.defer(ephemeral=True)
 
         author_thread_id = await self.database.get_thread_id(inter.guild.id, inter.author.id)
@@ -155,7 +161,11 @@ class Chatbot(commands.Cog):
             return
 
         # Delete user's thread
-        thread_name = await self.helpers.delete_thread(inter.guild, author_thread_id)
+        thread = inter.guild.get_thread(author_thread_id)
+        thread_name = thread.name if thread else str(author_thread_id)
+        if thread:
+            await thread.delete()
+        await self.database.remove_thread_id(author_thread_id)
 
         # If command sent from user's current thread session, do not attempt to send message thorugh it
         if isinstance(inter.channel, disnake.threads.Thread) and inter.channel.id == author_thread_id:
@@ -165,5 +175,5 @@ class Chatbot(commands.Cog):
         await inter.followup.send(f"Deleted thread \"{thread_name}\"")
 
 
-def setup(bot):
+def setup(bot: commands.InteractionBot) -> None:
     bot.add_cog(Chatbot(bot))
