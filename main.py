@@ -16,7 +16,7 @@ from utils.logging_config import configure_logger
 configure_logger()
 logger = logging.getLogger(__name__)
 
-bot = commands.InteractionBot(intents=disnake.Intents.all(), sync_commands=False)
+bot = commands.InteractionBot(intents=disnake.Intents.all(), chunk_guilds_at_startup=False)
 
 _client = AsyncDatabaseClient(
     host=config.DB_HOST,
@@ -31,12 +31,8 @@ bot.db = database
 
 @bot.event
 async def on_ready() -> None:
-    # await startup.update_new_members(bot, database)
-    # await startup.server_message_catchup(bot, database)
-    async def sync():
-        for guild in bot.guilds:
-            await bot.sync_application_commands(guild_id=guild.id)
-    bot.loop.create_task(sync())
+    await startup.update_new_members(bot, database)
+    await startup.server_message_catchup(bot, database)
     logger.info("Logged in as %s", bot.user)
 
 
