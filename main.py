@@ -31,7 +31,8 @@ bot.db = database
 
 @bot.event
 async def on_ready() -> None:
-    await bot.sync_all_application_commands()
+    from utils.admin_utils import clear_guild_commands
+    await clear_guild_commands(bot)
     await startup.update_new_members(bot, database)
     bot.loop.create_task(startup.server_message_catchup(bot, database))
     logger.info("Logged in as %s", bot.user)
