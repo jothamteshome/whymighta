@@ -92,11 +92,11 @@ class Theme(commands.Cog):
 
         await inter.edit_original_message("Random nicknames have been assigned")
 
-        await self.database.set_theme(inter.guild.id, server_structure)
-
         if skipped:
             lines = "\n".join(f"`{name}` — {nick}" for name, nick in skipped)
             await inter.channel.send(f"**Could not assign nicknames for:**\n{lines}")
+
+        await self.database.set_theme(inter.guild.id, server_structure)
 
     @theme.sub_command(description="Get current server nicknames in json format")
     async def export(self, inter: disnake.ApplicationCommandInteraction) -> None:

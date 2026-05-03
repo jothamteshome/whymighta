@@ -1,4 +1,5 @@
 import datetime
+import json
 from typing import Optional
 
 from database.client import AsyncDatabaseClient
@@ -91,8 +92,8 @@ class GuildRepository:
 
     async def set_theme(self, guild_id: int, theme: dict) -> None:
         await self._client.execute(
-            "UPDATE guilds SET theme = $1 WHERE guild_id = $2",
-            [theme, guild_id],
+            "UPDATE guilds SET theme = $1::jsonb WHERE guild_id = $2",
+            [json.dumps(theme), guild_id],
         )
 
     async def clear_theme(self, guild_id: int) -> None:
