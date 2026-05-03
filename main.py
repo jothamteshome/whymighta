@@ -31,7 +31,6 @@ bot.db = database
 
 @bot.event
 async def on_ready() -> None:
-    await bot.bulk_overwrite_global_commands([])
     await startup.update_new_members(bot, database)
     await startup.server_message_catchup(bot, database)
     logger.info("Logged in as %s", bot.user)
