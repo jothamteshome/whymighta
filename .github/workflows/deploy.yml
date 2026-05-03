@@ -48,8 +48,10 @@ jobs:
         aws ssm put-parameter --name "/whymighta/db/host" --value "${{ secrets.DB_HOST }}" --type "String" --overwrite
         aws ssm put-parameter --name "/whymighta/db/port" --value "${{ secrets.DB_PORT }}" --type "String" --overwrite
         aws ssm put-parameter --name "/whymighta/db/database" --value "${{ secrets.DB_DATABASE }}" --type "String" --overwrite
-        aws ssm put-parameter --name "/whymighta/api/chatgpt/url" --value "${{ secrets.AWS_CHATGPT_API_URL }}" --type "String" --overwrite
-        aws ssm put-parameter --name "/whymighta/api/chatgpt/key" --value "${{ secrets.AWS_CHATGPT_API_KEY }}" --type "SecureString" --overwrite
+        aws ssm put-parameter --name "/whymighta/api/openai/key" --value "${{ secrets.OPENAI_API_KEY }}" --type "SecureString" --overwrite
+        aws ssm put-parameter --name "/whymighta/api/anthropic/key" --value "${{ secrets.ANTHROPIC_API_KEY }}" --type "SecureString" --overwrite
+        aws ssm put-parameter --name "/whymighta/llm/openai/model" --value "${{ vars.OPENAI_MODEL }}" --type "String" --overwrite
+        aws ssm put-parameter --name "/whymighta/llm/anthropic/model" --value "${{ vars.ANTHROPIC_MODEL }}" --type "String" --overwrite
         aws ssm put-parameter --name "/whymighta/api/weather/key" --value "${{ secrets.WEATHER_API_KEY }}" --type "SecureString" --overwrite
         aws ssm put-parameter --name "/whymighta/discord/token" --value "${{ secrets.DISCORD_TOKEN }}" --type "SecureString" --overwrite
 

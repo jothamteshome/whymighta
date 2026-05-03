@@ -81,3 +81,29 @@ class GuildRepository:
             "UPDATE guilds SET bot_channel_id = $1 WHERE guild_id = $2",
             [channel_id, guild_id],
         )
+
+    async def get_theme(self, guild_id: int) -> Optional[dict]:
+        row = await self._client.fetchone(
+            "SELECT theme FROM guilds WHERE guild_id = $1",
+            [guild_id],
+        )
+        return row["theme"] if row else None
+
+    async def set_theme(self, guild_id: int, theme: dict) -> None:
+        await self._client.execute(
+            "UPDATE guilds SET theme = $1 WHERE guild_id = $2",
+            [theme, guild_id],
+        )
+
+    async def clear_theme(self, guild_id: int) -> None:
+        await self._client.execute(
+            "UPDATE guilds SET theme = NULL WHERE guild_id = $1",
+            [guild_id],
+        )
+
+    async def get_guild_config(self, guild_id: int) -> tuple[bool, bool]:
+        row = await self._client.fetchone(
+            "SELECT mock_mode, binary_mode FROM guilds WHERE guild_id = $1",
+            [guild_id],
+        )
+        return (row["mock_mode"], row["binary_mode"]) if row else (False, False)

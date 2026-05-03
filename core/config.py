@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -10,8 +12,10 @@ class Config(BaseSettings):
     DB_PORT: int
     DB_DATABASE: str
 
-    AWS_CHATGPT_API_URL: str
-    AWS_CHATGPT_API_KEY: str
+    ANTHROPIC_API_KEY: Optional[str] = None
+    OPENAI_API_KEY: Optional[str] = None
+    OPENAI_MODEL: str = "gpt-4.1-mini"
+    ANTHROPIC_MODEL: str = "claude-haiku-4-5"
 
     WEATHER_API_KEY: str
 

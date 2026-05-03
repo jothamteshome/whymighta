@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import os
+import random
 
 import disnake
 from disnake.ext import commands
@@ -8,6 +9,7 @@ from disnake.ext import commands
 from core.config import config
 from database.client import AsyncDatabaseClient
 from database.manager import Database
+from models.theme import GuildTheme
 from utils import message_modes, startup, xp
 from utils.logging_config import configure_logger
 
@@ -71,6 +73,46 @@ async def on_application_command(inter: disnake.ApplicationCommandInteraction) -
 async def on_member_join(member: disnake.Member) -> None:
     await database.add_user(member.id, member.guild.id)
     logger.info("Member joined: user=%d guild=%d", member.id, member.guild.id)
+
+    raw_theme = await database.get_theme(member.guild.id)
+
+    if not raw_theme:
+        bot_channel_id = await database.get_bot_text_channel_id(member.guild.id)
+        if bot_channel_id:
+            channel = bot.get_channel(bot_channel_id)
+            if channel:
+                await channel.send(
+                    f"{member.mention} just joined — no theme is currently set. "
+                    "Update their nickname manually."
+                )
+        return
+
+    theme = GuildTheme.model_validate(raw_theme)
+    used_names = {m.nick for m in member.guild.members if m.nick}
+    available = [n for n in theme.names if n not in used_names]
+
+    if not available:
+        bot_channel_id = await database.get_bot_text_channel_id(member.guild.id)
+        if bot_channel_id:
+            channel = bot.get_channel(bot_channel_id)
+            if channel:
+                await channel.send(
+                    f"{member.mention} just joined but no names are available "
+                    "in the current theme. Update their nickname manually."
+                )
+        return
+
+    new_nick = random.choice(available)
+    try:
+        await member.edit(nick=new_nick)
+        logger.info(
+            "Auto-assigned nick '%s' to %s on join in guild %d",
+            new_nick, member.name, member.guild.id,
+        )
+    except (disnake.Forbidden, disnake.HTTPException) as e:
+        logger.warning(
+            "Could not assign nickname to %s on join: %s", member.name, e
+        )
 
 
 @bot.event
