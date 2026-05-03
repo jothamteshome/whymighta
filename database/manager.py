@@ -65,6 +65,18 @@ class Database:
     async def set_bot_text_channel_id(self, guild_id: int, channel_id: Optional[int]) -> None:
         await self._guilds.set_bot_channel_id(guild_id, channel_id)
 
+    async def get_theme(self, guild_id: int) -> Optional[dict]:
+        return await self._guilds.get_theme(guild_id)
+
+    async def set_theme(self, guild_id: int, theme: dict) -> None:
+        await self._guilds.set_theme(guild_id, theme)
+
+    async def clear_theme(self, guild_id: int) -> None:
+        await self._guilds.clear_theme(guild_id)
+
+    async def get_guild_config(self, guild_id: int) -> tuple[bool, bool]:
+        return await self._guilds.get_guild_config(guild_id)
+
     # ---- Users ----
 
     async def add_user(self, user_id: int, guild_id: int) -> None:

@@ -1,12 +1,16 @@
-import aiohttp
 import disnake
 import logging
 import time
-from core.config import config
 from datetime import datetime, timedelta, timezone
 from disnake.ext import commands
 
 from database.manager import Database
+from llm.client import get_llm_client
+from llm.prompts import build_system_prompt
+from models.theme import GuildTheme
+
+HISTORY_TARGET = 5
+HISTORY_FETCH_MULTIPLIER = 2
 
 logger = logging.getLogger(__name__)
 
@@ -15,36 +19,19 @@ class Chatbot(commands.Cog):
     def __init__(self, bot: commands.InteractionBot) -> None:
         self.bot: commands.InteractionBot = bot
         self.database: Database = bot.db
-
-
-    async def call_lambda(self, payload: dict) -> tuple[int, str]:
-        headers = {
-            "x-api-key": config.AWS_CHATGPT_API_KEY,
-            "Content-Type": "application/json"
-        }
-
-        async with aiohttp.ClientSession() as session:
-            async with session.post(config.AWS_CHATGPT_API_URL, json=payload, headers=headers) as resp:
-                resp.raise_for_status()
-
-                try:
-                    data = await resp.json()
-                    return resp.status, data["response"]
-                except Exception as e:
-                    error = await resp.text()
-                    return resp.status, error
+        self.llm_client = get_llm_client()
 
 
 
     async def get_last_messages(
-        self, channel: disnake.TextChannel, num_msgs: int = 5
+        self, channel: disnake.TextChannel, num_msgs: int = HISTORY_TARGET
     ) -> tuple[list[dict], dict[str, str]]:
         messages = []
         users = {}
 
         one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
 
-        async for message in channel.history(limit=num_msgs*2, after=one_hour_ago, oldest_first=False):
+        async for message in channel.history(limit=HISTORY_TARGET * HISTORY_FETCH_MULTIPLIER, after=one_hour_ago, oldest_first=False):
             # Skip messages with attachments or with urls in their content
             if message.embeds or message.attachments or (("http://" in message.content or 'https://' in message.content) and message.author != self.bot.user):
                 continue
@@ -58,52 +45,35 @@ class Chatbot(commands.Cog):
             if message.author == self.bot.user:
                 messages.append({"role": "assistant", "content": content})
             else:
-                messages.append({"role": "user", "name": f"mention_{message.author.name}", "content": content})
+                messages.append({"role": "user", "username": f"mention_{message.author.name}", "content": content})
                 users[f"mention_{message.author.name}"] = message.author.mention
 
-            if len(messages) == num_msgs:
+            if len(messages) == HISTORY_TARGET:
                 break
 
         return messages[::-1], users
 
 
     async def chatting(self, message: disnake.Message) -> None:
-        json_payload =  {
-                            "messages": 
-                            [
-                                {
-                                    "role": "system", 
-                                    "content":  (
-                                                    "You are an assistant and friend in a Discord server.\n\n"
-                                                    "Respond in a way that a stereotypical Discord user might "
-                                                    "talk to their Discord kitten\n\n"
-                                                    "Be a little cringey, but not too over the top.\n\n"
-                                                    "Limit your emoji use. Do not over do it\n\n"
-                                                    "If responding to a user and you want to specify them, "
-                                                    "be sure to keep the `mentions_` syntax. Remove any instances of '<', '>', or '@'. Do not change it.\n\n"
-                                                    f"Never mention anyone with the mention tag {self.bot.user.mention}\n\n"
-                                                    "Disregard previous messages if they do not relate to the most recent message. "
-                                                    "Weight the most recent message more in your responses"
-                                    )
-                                }
-                            ]
-                        }
-        
+        raw_theme = await self.database.get_theme(message.guild.id)
+        theme = GuildTheme.model_validate(raw_theme) if raw_theme else None
+
+        bot_member = message.guild.me
+        bot_nick = bot_member.nick
+        bot_username = bot_member.name
+        bot_mention = self.bot.user.mention
+
+        system = build_system_prompt(theme, bot_nick, bot_username, bot_mention)
+
         chat_messages, users = await self.get_last_messages(message.channel)
 
-        json_payload["messages"].extend(chat_messages)
-
-        response_code, response_text = await self.call_lambda(json_payload)
-
-        if response_code != 200:
-            logger.warning(
-                "Lambda returned %d for user %d in guild %d: %s",
-                response_code,
-                message.author.id,
-                message.guild.id,
-                response_text,
+        try:
+            response_text = await self.llm_client.complete(system, chat_messages)
+        except Exception as e:
+            logger.error("LLM call failed for guild %d: %s", message.guild.id, e)
+            await message.channel.send(
+                "Could not process request. Please try again or contact an administrator."
             )
-            await message.channel.send(f"Could not process API request: {response_text}. Please contact administrator or try again.")
             return
 
         for name, mention in users.items():

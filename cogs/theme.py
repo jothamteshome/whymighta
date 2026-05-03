@@ -7,6 +7,10 @@ from typing import Optional
 
 import disnake
 from disnake.ext import commands
+from pydantic import ValidationError
+
+from database.manager import Database
+from models.theme import GuildTheme
 
 logger = logging.getLogger(__name__)
 
@@ -14,6 +18,7 @@ logger = logging.getLogger(__name__)
 class Theme(commands.Cog):
     def __init__(self, bot: commands.InteractionBot) -> None:
         self.bot: commands.InteractionBot = bot
+        self.database: Database = bot.db
 
     @commands.slash_command(
         default_member_permissions=disnake.Permissions(administrator=True)
@@ -40,6 +45,12 @@ class Theme(commands.Cog):
             return
         elif not isinstance(server_structure["names"], list):
             await inter.edit_original_message("Please make sure the value of `names` is a list")
+            return
+
+        try:
+            GuildTheme.model_validate(server_structure)
+        except ValidationError as e:
+            await inter.edit_original_message(f"Invalid theme format: {e}")
             return
 
         members = inter.guild.members
@@ -81,6 +92,8 @@ class Theme(commands.Cog):
 
         await inter.edit_original_message("Random nicknames have been assigned")
 
+        await self.database.set_theme(inter.guild.id, server_structure)
+
         if skipped:
             lines = "\n".join(f"`{name}` — {nick}" for name, nick in skipped)
             await inter.channel.send(f"**Could not assign nicknames for:**\n{lines}")
@@ -100,6 +113,52 @@ class Theme(commands.Cog):
             server_names_file = disnake.File(fp=byte_fp, filename="server_nicknames_dump.json")
 
         await inter.edit_original_response(content="", file=server_names_file)
+
+    @theme.sub_command(description="Show the current theme details")
+    async def show(self, inter: disnake.ApplicationCommandInteraction) -> None:
+        await inter.response.defer()
+
+        raw_theme = await self.database.get_theme(inter.guild.id)
+        if not raw_theme:
+            await inter.edit_original_message("No theme is currently set.")
+            return
+
+        theme = GuildTheme.model_validate(raw_theme)
+        bot_nick = inter.guild.me.nick or "None assigned"
+
+        embed = disnake.Embed(title="Current Theme", color=0x9534eb)
+        embed.add_field(name="Theme Title", value=theme.title or "Not set", inline=False)
+        embed.add_field(name="Description", value=(theme.description or "Not set")[:100], inline=False)
+        embed.add_field(name="Names in Pool", value=str(len(theme.names)), inline=True)
+        embed.add_field(name="Roleplay", value="On" if theme.roleplay else "Off", inline=True)
+        embed.add_field(name="Bot's Character", value=bot_nick, inline=True)
+
+        await inter.edit_original_message(embed=embed)
+
+    @theme.sub_command(description="Clear the current theme")
+    async def clear(self, inter: disnake.ApplicationCommandInteraction) -> None:
+        await inter.response.defer()
+        await self.database.clear_theme(inter.guild.id)
+        await inter.edit_original_message(
+            "Theme cleared. New members will need to be renamed manually until a new theme is applied."
+        )
+
+    @theme.sub_command(description="Toggle roleplay mode for the current theme")
+    async def roleplay(
+        self,
+        inter: disnake.ApplicationCommandInteraction,
+        enabled: str = commands.Param(choices=["on", "off"]),
+    ) -> None:
+        await inter.response.defer()
+        raw_theme = await self.database.get_theme(inter.guild.id)
+        if not raw_theme:
+            await inter.edit_original_message("No theme is currently set.")
+            return
+        theme = GuildTheme.model_validate(raw_theme)
+        updated = theme.model_copy(update={"roleplay": enabled == "on"})
+        await self.database.set_theme(inter.guild.id, updated.model_dump())
+        status = "enabled" if updated.roleplay else "disabled"
+        await inter.edit_original_message(f"Roleplay is now {status}.")
 
 
 def setup(bot: commands.InteractionBot) -> None:
