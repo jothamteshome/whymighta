@@ -80,14 +80,15 @@ class Theme(commands.Cog):
                 continue
 
             try:
-                await asyncio.wait_for(member.edit(nick=new_nick), timeout=10)
+                await member.edit(nick=new_nick)
                 logger.debug("Assigned %s -> %s", member.name, new_nick)
-                await asyncio.sleep(0.5)
+                # Increase this to 1.1s to stay under the 10/10s limit
+                await asyncio.sleep(1.1) 
             except disnake.errors.Forbidden as e:
-                logger.debug("Could not set nick for %s (no permission): %s", member.name, e)
+                logger.debug("No permission for %s: %s", member.name, e)
                 skipped.append((member.name, new_nick))
-            except (asyncio.TimeoutError, disnake.errors.HTTPException) as e:
-                logger.warning("Could not set nick for %s: %s", member.name, e)
+            except disnake.errors.HTTPException as e:
+                logger.warning("HTTP Error for %s: %s %s", member.name, e.status, e.text)
                 skipped.append((member.name, new_nick))
 
         await inter.edit_original_message("Random nicknames have been assigned")
