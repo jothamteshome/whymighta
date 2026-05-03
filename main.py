@@ -31,8 +31,8 @@ bot.db = database
 
 @bot.event
 async def on_ready() -> None:
-    await startup.update_new_members(bot, database)
-    await startup.server_message_catchup(bot, database)
+    # await startup.update_new_members(bot, database)
+    # await startup.server_message_catchup(bot, database)
     logger.info("Logged in as %s", bot.user)
 
 
