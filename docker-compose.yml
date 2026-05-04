@@ -1,6 +1,6 @@
 services:
   whymighta:
-    container_name: whymighta
+    container_name: whymighta-dev
     build: .
     restart: always
     networks:
