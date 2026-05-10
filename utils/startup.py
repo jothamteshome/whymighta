@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime, timezone
 
 import disnake
 from disnake.ext import commands
@@ -21,7 +22,10 @@ async def update_new_members(bot: commands.InteractionBot, db: Database) -> None
 async def server_message_catchup(bot: commands.InteractionBot, db: Database) -> None:
     for guild in bot.guilds:
         last_seen = await db.query_last_message_sent(guild.id)
-        last_server_message_time = last_seen or guild.created_at
+        epoch = datetime(1970, 1, 1, tzinfo=timezone.utc)
+        last_server_message_time = (
+            last_seen if (last_seen is not None and last_seen > epoch) else guild.created_at
+        )
         logger.info(
             "Catching up guild %d (%s) from %s",
             guild.id,
@@ -36,9 +40,13 @@ async def server_message_catchup(bot: commands.InteractionBot, db: Database) -> 
             if not isinstance(channel, disnake.TextChannel):
                 continue
 
-            new_messages = await channel.history(
-                after=last_server_message_time, oldest_first=True
-            ).flatten()
+            try:
+                new_messages = await channel.history(
+                    after=last_server_message_time, oldest_first=True
+                ).flatten()
+            except (disnake.Forbidden, disnake.HTTPException) as e:
+                logger.debug("Skipping channel %d in guild %d: %s", channel.id, guild.id, e)
+                continue
 
             for message in new_messages:
                 if message.interaction_metadata is None and not message.author.bot:

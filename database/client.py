@@ -1,3 +1,5 @@
+import json
+
 import asyncpg
 from contextlib import asynccontextmanager
 from typing import Optional
@@ -27,10 +29,19 @@ class AsyncDatabaseClient:
         self._pool: Optional[asyncpg.Pool] = None
 
     async def init_pool(self) -> None:
+        async def _init_conn(conn: asyncpg.Connection) -> None:
+            await conn.set_type_codec(
+                "jsonb",
+                encoder=json.dumps,
+                decoder=json.loads,
+                schema="pg_catalog",
+            )
+
         self._pool = await asyncpg.create_pool(
             self._connection_string,
             min_size=self._min_size,
             max_size=self._max_size,
+            init=_init_conn,
         )
 
     async def close_pool(self) -> None:

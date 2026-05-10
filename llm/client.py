@@ -1,9 +1,12 @@
+import logging
 from abc import ABC, abstractmethod
 
 import anthropic
 import openai
 
 from core.config import config
+
+logger = logging.getLogger(__name__)
 
 
 class LLMClient(ABC):
@@ -50,8 +53,10 @@ class AnthropicClient(LLMClient):
 
 def get_llm_client() -> LLMClient:
     if config.OPENAI_API_KEY:
+        logger.info("Using OpenAI client (model: %s)", config.OPENAI_MODEL)
         return OpenAIClient()
     if config.ANTHROPIC_API_KEY:
+        logger.info("Using Anthropic client (model: %s)", config.ANTHROPIC_MODEL)
         return AnthropicClient()
     raise RuntimeError(
         "No LLM API key configured. Set OPENAI_API_KEY or ANTHROPIC_API_KEY."
