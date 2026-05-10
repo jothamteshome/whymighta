@@ -1,32 +1,12 @@
-services:
-  postgres:
-    container_name: postgres
-    image: postgres:18-alpine
-    restart: always
-    deploy:
-      resources:
-        limits:
-          memory: 256m
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-    environment:
-      POSTGRES_USER: whymighta_user
-      POSTGRES_PASSWORD: whymighta_password
-      POSTGRES_DB: whymighta_db
-    volumes:
-      - postgres_data:/var/lib/postgresql
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U whymighta_user -d whymighta_db"]
-      interval: 5s
-      retries: 5
+name: whymighta-dev
 
+services:
   whymighta:
     container_name: whymighta
     build: .
     restart: always
+    networks:
+      - local-infra
     deploy:
       resources:
         limits:
@@ -37,9 +17,7 @@ services:
         max-size: "10m"
         max-file: "3"
     env_file: .env
-    depends_on:
-      postgres:
-        condition: service_healthy
 
-volumes:
-  postgres_data:
+networks:
+  local-infra:
+    external: true

@@ -38,33 +38,25 @@ class Theme(commands.Cog):
         logger.debug("Starting file download")
         await file.save(fp)
         fp.seek(0)
-        server_structure = json.load(fp)
-
-        if "names" not in server_structure:
-            await inter.edit_original_message("Please make sure `names` key exists in JSON")
-            return
-        elif not isinstance(server_structure["names"], list):
-            await inter.edit_original_message("Please make sure the value of `names` is a list")
-            return
 
         try:
-            GuildTheme.model_validate(server_structure)
+            theme = GuildTheme.model_validate(json.load(fp))
         except ValidationError as e:
             await inter.edit_original_message(f"Invalid theme format: {e}")
             return
 
         members = inter.guild.members
 
-        if len(server_structure["names"]) < len(members):
+        if len(theme.names) < len(members):
             await inter.edit_original_message(
                 f"Please provide enough names to allocate one for each member in server "
-                f"({len(members) - len(server_structure['names'])} more required)"
+                f"({len(members) - len(theme.names)} more required)"
             )
             return
 
-        logger.debug("JSON loaded: %d names, %d members", len(server_structure["names"]), len(members))
+        logger.debug("JSON loaded: %d names, %d members", len(theme.names), len(members))
 
-        new_nicks = server_structure["names"]
+        new_nicks = list(theme.names)
         random.shuffle(new_nicks)
 
         skipped: list[tuple[str, str]] = []
@@ -72,9 +64,7 @@ class Theme(commands.Cog):
         for member in members:
             new_nick = new_nicks.pop()
 
-            if not member.bot and (
-                member == inter.guild.owner or inter.guild.me.top_role <= member.top_role
-            ):
+            if member != inter.guild.me and (member == inter.guild.owner or inter.guild.me.top_role <= member.top_role):
                 logger.debug("Skipping %s (role hierarchy)", member.name)
                 skipped.append((member.name, new_nick))
                 continue
@@ -82,8 +72,7 @@ class Theme(commands.Cog):
             try:
                 await member.edit(nick=new_nick)
                 logger.debug("Assigned %s -> %s", member.name, new_nick)
-                # Increase this to 1.1s to stay under the 10/10s limit
-                await asyncio.sleep(1.1) 
+                await asyncio.sleep(1.1)
             except disnake.errors.Forbidden as e:
                 logger.debug("No permission for %s: %s", member.name, e)
                 skipped.append((member.name, new_nick))
@@ -97,7 +86,12 @@ class Theme(commands.Cog):
             lines = "\n".join(f"`{name}` — {nick}" for name, nick in skipped)
             await inter.channel.send(f"**Could not assign nicknames for:**\n{lines}")
 
-        await self.database.set_theme(inter.guild.id, server_structure)
+        try:
+            await self.database.set_theme(inter.guild.id, theme.model_dump())
+        except Exception as e:
+            logger.error("Failed to save theme for guild %d: %s", inter.guild.id, e)
+            await inter.channel.send("Nicknames were assigned but the theme could not be saved to the database.")
+
 
     @theme.sub_command(description="Get current server nicknames in json format")
     async def export(self, inter: disnake.ApplicationCommandInteraction) -> None:

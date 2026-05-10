@@ -38,6 +38,8 @@ async def on_ready() -> None:
 
 @bot.event
 async def on_message(message: disnake.Message) -> None:
+    if message.guild is None:
+        return
     if message.author.bot is not True:
         if bot.user in message.mentions:
             cog = bot.get_cog("Chatbot")
@@ -145,7 +147,11 @@ async def on_guild_channel_delete(channel: disnake.abc.GuildChannel) -> None:
 for filename in os.listdir("./cogs"):
     if filename.endswith(".py"):
         name, ext = os.path.splitext(filename)
-        bot.load_extension(f"cogs.{name}")
+        try:
+            bot.load_extension(f"cogs.{name}")
+            logger.info("Loaded cog: %s", name)
+        except Exception as e:
+            logger.error("Failed to load cog %s: %s", name, e)
 
 
 async def main() -> None:
