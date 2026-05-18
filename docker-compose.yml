@@ -4,7 +4,7 @@ services:
   whymighta:
     container_name: whymighta
     build: .
-    restart: always
+    restart: unless-stopped
     networks:
       - local-infra
     deploy:
