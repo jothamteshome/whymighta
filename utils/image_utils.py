@@ -6,6 +6,14 @@ import disnake
 from PIL import Image
 
 
+async def fetch_image_bytes(url: str) -> bytes:
+    """Fetch raw bytes from an image URL. Raises aiohttp.ClientResponseError on non-200."""
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as resp:
+            resp.raise_for_status()
+            return await resp.read()
+
+
 async def imprison_member(member: disnake.Member) -> disnake.File:
     """Overlay prison bars over a member's avatar and return a disnake File."""
     MAX_IMG_SIZE = 1024

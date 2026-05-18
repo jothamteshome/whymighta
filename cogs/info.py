@@ -1,11 +1,10 @@
 import logging
-from typing import Optional
 
 import disnake
 from disnake.ext import commands
 
 from database.manager import Database
-from models.theme import GuildTheme
+from utils.theme_utils import add_theme_fields, get_guild_theme
 
 logger = logging.getLogger(__name__)
 
@@ -31,8 +30,7 @@ class Info(commands.Cog):
 
         mock, binary = await self.database.get_guild_config(inter.guild.id)
 
-        raw_theme = await self.database.get_theme(inter.guild.id)
-        theme: Optional[GuildTheme] = GuildTheme.model_validate(raw_theme) if raw_theme else None
+        theme = await get_guild_theme(self.database, inter.guild.id)
 
         embed = disnake.Embed(title="Bot Status", color=0x9534eb)
 
@@ -41,12 +39,8 @@ class Info(commands.Cog):
         embed.add_field(name="Binary Mode", value="On" if binary else "Off", inline=True)
 
         if theme:
-            embed.add_field(name="Theme Title", value=theme.title or "Not set", inline=False)
-            embed.add_field(name="Theme Description", value=(theme.description or "Not set")[:100], inline=False)
-            embed.add_field(name="Names in Pool", value=str(len(theme.names)), inline=True)
-            embed.add_field(name="Roleplay", value="On" if theme.roleplay else "Off", inline=True)
             bot_nick = inter.guild.me.nick or "None assigned"
-            embed.add_field(name="Bot's Character", value=bot_nick, inline=True)
+            add_theme_fields(embed, theme, bot_nick)
         else:
             embed.add_field(name="Theme", value="Not set", inline=False)
 
@@ -55,3 +49,4 @@ class Info(commands.Cog):
 
 def setup(bot: commands.InteractionBot) -> None:
     bot.add_cog(Info(bot))
+
