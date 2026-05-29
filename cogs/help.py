@@ -14,9 +14,10 @@ class Help(commands.Cog):
 
     @commands.slash_command(description="Browse all bot commands")
     async def help(self, inter: disnake.ApplicationCommandInteraction) -> None:
+        await inter.response.defer()
         catalog = build_catalog(self.bot, in_dm=inter.guild_id is None)
         view = HelpView(catalog)
-        await inter.response.send_message(embed=overview_embed(catalog), view=view)
+        await inter.edit_original_response(embed=overview_embed(catalog), view=view)
         view.message = await inter.original_message()
 
 

@@ -58,7 +58,7 @@ def overview_embed(catalog: dict[str, list[dict]]) -> disnake.Embed:
         value=(
             f"I've got `{num_categories}` categories and "
             f"`{num_commands}` commands for you to explore."
-        )
+        ),
     )
 
     categories = sorted(catalog)
@@ -75,7 +75,7 @@ def overview_embed(catalog: dict[str, list[dict]]) -> disnake.Embed:
     return overview
 
 
-def category_embed(cog_name: str, cmds: list[dict], page: int, total_pages: int) -> disnake.Embed:
+def category_embed(cog_name: str, cmds: list[dict], page: int) -> disnake.Embed:
     start = page * PAGE_SIZE
     page_cmds = cmds[start : start + PAGE_SIZE]
     embed = disnake.Embed(
@@ -83,16 +83,14 @@ def category_embed(cog_name: str, cmds: list[dict], page: int, total_pages: int)
         color=DEFAULT_EMBED_COLOR,
     )
     for entry in page_cmds:
-        name = entry["path"] + ("  ⚙️" if entry["admin_only"] else "")
-        embed.add_field(name=f"`{name}`", value=entry["description"] or "No description", inline=False)
-    if total_pages > 1:
-        embed.set_footer(text=f"Page {page + 1} of {total_pages}")
+        label = f"`{entry['path']}`" + ("  ⚙️" if entry["admin_only"] else "")
+        embed.add_field(name=label, value=entry["description"] or "No description", inline=False)
     return embed
 
 
 class HelpView(disnake.ui.View):
     def __init__(self, catalog: dict[str, list[dict]]) -> None:
-        super().__init__(timeout=120)
+        super().__init__(timeout=None)
         self.catalog = catalog
         self.current_category: str | None = None
         self.page: int = 0
@@ -119,21 +117,32 @@ class HelpView(disnake.ui.View):
         self.add_item(select)
 
         total = self._total_pages()
+        on_overview = self.current_category is None
 
-        if self.current_category is not None:
+        if not on_overview:
             prev = disnake.ui.Button(
-                label="◀", style=disnake.ButtonStyle.secondary, row=1, disabled=(self.page == 0)
+                emoji="◀",
+                style=disnake.ButtonStyle.secondary,
+                row=1,
+                disabled=(self.page == 0),
             )
             prev.callback = self._on_prev
             self.add_item(prev)
 
-        close = disnake.ui.Button(label="✕ Close", style=disnake.ButtonStyle.secondary, row=1)
+        close = disnake.ui.Button(
+            emoji="✖️",
+            style=disnake.ButtonStyle.danger if on_overview else disnake.ButtonStyle.secondary,
+            row=1,
+        )
         close.callback = self._on_close
         self.add_item(close)
 
-        if self.current_category is not None:
+        if not on_overview:
             nxt = disnake.ui.Button(
-                label="▶", style=disnake.ButtonStyle.secondary, row=1, disabled=(self.page >= total - 1)
+                emoji="▶",
+                style=disnake.ButtonStyle.secondary,
+                row=1,
+                disabled=(self.page >= total - 1),
             )
             nxt.callback = self._on_next
             self.add_item(nxt)
@@ -144,7 +153,8 @@ class HelpView(disnake.ui.View):
         self._rebuild_components()
         cmds = self.catalog[self.current_category]
         await inter.response.edit_message(
-            embed=category_embed(self.current_category, cmds, self.page, self._total_pages()),
+            content=f"Page {self.page + 1} of {self._total_pages()}",
+            embed=category_embed(self.current_category, cmds, self.page),
             view=self,
         )
 
@@ -153,7 +163,8 @@ class HelpView(disnake.ui.View):
         self._rebuild_components()
         cmds = self.catalog[self.current_category]
         await inter.response.edit_message(
-            embed=category_embed(self.current_category, cmds, self.page, self._total_pages()),
+            content=f"Page {self.page + 1} of {self._total_pages()}",
+            embed=category_embed(self.current_category, cmds, self.page),
             view=self,
         )
 
@@ -162,16 +173,11 @@ class HelpView(disnake.ui.View):
         self._rebuild_components()
         cmds = self.catalog[self.current_category]
         await inter.response.edit_message(
-            embed=category_embed(self.current_category, cmds, self.page, self._total_pages()),
+            content=f"Page {self.page + 1} of {self._total_pages()}",
+            embed=category_embed(self.current_category, cmds, self.page),
             view=self,
         )
 
     async def _on_close(self, inter: disnake.MessageInteraction) -> None:
         await inter.response.defer()
         await inter.delete_original_response()
-
-    async def on_timeout(self) -> None:
-        for child in self.children:
-            child.disabled = True
-        if self.message:
-            await self.message.edit(view=self)
