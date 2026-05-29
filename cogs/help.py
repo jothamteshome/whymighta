@@ -16,7 +16,7 @@ class Help(commands.Cog):
     async def help(self, inter: disnake.ApplicationCommandInteraction) -> None:
         catalog = build_catalog(self.bot, in_dm=inter.guild_id is None)
         view = HelpView(catalog)
-        await inter.response.send_message(embed=overview_embed(), view=view)
+        await inter.response.send_message(embed=overview_embed(catalog), view=view)
         view.message = await inter.original_message()
 
 
