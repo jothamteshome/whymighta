@@ -14,11 +14,12 @@ def build_catalog(bot: commands.InteractionBot, in_dm: bool = False) -> dict[str
     """Return {cog_name: [command_info, ...]} for all public commands."""
     catalog: dict[str, list[dict]] = {}
 
-    for cmd in bot.slash_commands.values():
+    for cmd in bot.all_slash_commands.values():
         cog_name = cmd.cog_name or "Other"
         if cog_name in _EXCLUDED_COGS:
             continue
-        if in_dm and getattr(cmd, "dm_permission", True) is False:
+        cmd_contexts = getattr(cmd, "contexts", None)
+        if in_dm and cmd_contexts is not None and not cmd_contexts.bot_dm:
             continue
 
         admin_only = (
@@ -36,7 +37,7 @@ def build_catalog(bot: commands.InteractionBot, in_dm: bool = False) -> dict[str
                         "required": opt.required,
                         "type": opt.type.name if hasattr(opt.type, "name") else str(opt.type),
                     }
-                    for opt in (sub.options or [])
+                    for opt in (sub.option.options or [])
                 ]
                 sub_commands.append(
                     {"name": sub.name, "description": sub.description or "", "options": options}

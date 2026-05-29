@@ -26,7 +26,7 @@ class Theme(commands.Cog):
 
     @commands.slash_command(
         default_member_permissions=disnake.Permissions(administrator=True),
-        dm_permission=False,
+        contexts=disnake.InteractionContextTypes(guild=True),
     )
     async def theme(self, inter: disnake.ApplicationCommandInteraction) -> None:
         pass

@@ -17,7 +17,7 @@ class Info(commands.Cog):
     @commands.slash_command(
         description="Show bot status and configuration for this server",
         default_member_permissions=disnake.Permissions(administrator=True),
-        dm_permission=False,
+        contexts=disnake.InteractionContextTypes(guild=True),
     )
     async def info(self, inter: disnake.ApplicationCommandInteraction) -> None:
         await inter.response.defer()

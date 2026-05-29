@@ -1,6 +1,7 @@
 import logging
 import os
 
+import disnake
 from disnake import ApplicationCommandInteraction, Embed
 from disnake.ext import commands
 
@@ -11,7 +12,7 @@ class CogManager(commands.Cog):
     def __init__(self, bot: commands.InteractionBot) -> None:
         self.bot: commands.InteractionBot = bot
 
-    @commands.slash_command(description="Manage cogs (bot owner only)", dm_permission=False)
+    @commands.slash_command(description="Manage cogs (bot owner only)", contexts=disnake.InteractionContextTypes(guild=True))
     @commands.is_owner()
     async def cog(self, inter: ApplicationCommandInteraction):
         pass

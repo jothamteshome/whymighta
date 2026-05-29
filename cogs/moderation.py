@@ -13,7 +13,7 @@ class Moderation(commands.Cog):
     @commands.slash_command(
         description="Clear up to 100 messages from the current channel at once",
         default_member_permissions=disnake.Permissions(administrator=True),
-        dm_permission=False,
+        contexts=disnake.InteractionContextTypes(guild=True),
     )
     async def purge(self, inter: disnake.ApplicationCommandInteraction, number: int = 5) -> None:
         if number < 1 or number > 100:

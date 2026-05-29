@@ -2,6 +2,7 @@ import logging
 import math
 import time
 
+import disnake
 from disnake import ApplicationCommandInteraction, Embed
 from disnake.ext import commands
 
@@ -58,7 +59,7 @@ class Utilities(commands.Cog):
 
         await inter.edit_original_message(embed=embed)
 
-    @commands.slash_command(description="View the server XP leaderboard", dm_permission=False)
+    @commands.slash_command(description="View the server XP leaderboard", contexts=disnake.InteractionContextTypes(guild=True))
     async def leaderboard(self, inter: ApplicationCommandInteraction) -> None:
         await inter.response.defer()
 
@@ -73,7 +74,7 @@ class Utilities(commands.Cog):
         await inter.edit_original_message(embed=view.get_embed(), view=view)
         view.message = await inter.original_message()
 
-    @commands.slash_command(description="Puts a deserving criminal behind bars", dm_permission=False)
+    @commands.slash_command(description="Puts a deserving criminal behind bars", contexts=disnake.InteractionContextTypes(guild=True))
     async def jail(self, inter: ApplicationCommandInteraction, name: str) -> None:
         members = {member.name: member for member in inter.guild.members}
         nicknames = {member.nick: member for member in inter.guild.members if member.nick}

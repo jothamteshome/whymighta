@@ -16,7 +16,10 @@ from utils.logging_config import configure_logger
 configure_logger()
 logger = logging.getLogger(__name__)
 
-bot = commands.InteractionBot(intents=disnake.Intents.all())
+bot = commands.InteractionBot(
+    intents=disnake.Intents.all(),
+    default_install_types=disnake.ApplicationInstallTypes(guild=True),
+)
 
 _client = AsyncDatabaseClient(
     host=config.DB_HOST,

@@ -19,7 +19,7 @@ class ServerConfig(commands.Cog):
     @commands.slash_command(
         name="bot_channel",
         default_member_permissions=disnake.Permissions(administrator=True),
-        dm_permission=False,
+        contexts=disnake.InteractionContextTypes(guild=True),
     )
     async def channel(self, inter: disnake.ApplicationCommandInteraction) -> None:
         pass
@@ -52,7 +52,7 @@ class ServerConfig(commands.Cog):
 
     @commands.slash_command(
         default_member_permissions=disnake.Permissions(administrator=True),
-        dm_permission=False,
+        contexts=disnake.InteractionContextTypes(guild=True),
     )
     async def toggle(self, inter: disnake.ApplicationCommandInteraction) -> None:
         pass
