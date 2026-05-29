@@ -46,27 +46,27 @@ async def give_message_xp(
     message: disnake.Message,
     catching_up: bool,
 ) -> None:
-    mentions_xp = len(message.mentions) * 5
-    attachments_xp = len(message.attachments) * 10
-    content_xp = len(message.content)
+    delta = len(message.mentions) * 5 + len(message.attachments) * 10 + len(message.content)
 
-    prev_xp = await db.current_user_score(message.author.id, message.guild.id)
-    curr_xp = prev_xp + mentions_xp + attachments_xp + content_xp
+    if message.guild is not None:
+        prev_xp = await db.current_guild_score(message.author.id, message.guild.id)
 
-    logger.debug(
-        "Message XP: user=%d guild=%d +%d -> %d (catching_up=%s)",
-        message.author.id,
-        message.guild.id,
-        curr_xp - prev_xp,
-        curr_xp,
-        catching_up,
-    )
+        logger.debug(
+            "Message XP: user=%d guild=%d +%d -> %d (catching_up=%s)",
+            message.author.id,
+            message.guild.id,
+            delta,
+            prev_xp + delta,
+            catching_up,
+        )
 
-    if not catching_up:
-        await announce_level_up(db, bot, prev_xp, curr_xp, message.author, message.channel)
+        if not catching_up:
+            await announce_level_up(db, bot, prev_xp, prev_xp + delta, message.author, message.channel)
 
-    await db.update_user_score(message.author.id, message.guild.id, curr_xp)
-    await db.update_last_message_sent(message.guild.id, message.created_at)
+        await db.award_guild_xp(message.author.id, message.guild.id, delta, message.created_at)
+    else:
+        logger.debug("DM XP: user=%d +%d", message.author.id, delta)
+        await db.award_global_xp(message.author.id, delta)
 
 
 async def give_inter_xp(
@@ -75,24 +75,25 @@ async def give_inter_xp(
     inter: disnake.ApplicationCommandInteraction,
     catching_up: bool,
 ) -> None:
-    if inter.data.name == "level":
+    if inter.data.name in ("level", "leaderboard", "help"):
         return
-    score = 5 + sum(len(opt) for opt in inter.options)
+    delta = 5 + sum(len(opt) for opt in inter.options)
 
-    prev_xp = await db.current_user_score(inter.author.id, inter.guild_id)
-    curr_xp = prev_xp + score
+    if inter.guild_id is not None:
+        prev_xp = await db.current_guild_score(inter.author.id, inter.guild_id)
 
-    logger.debug(
-        "Interaction XP: user=%d guild=%d command=%s +%d -> %d",
-        inter.author.id,
-        inter.guild_id,
-        inter.data.name,
-        score,
-        curr_xp,
-    )
+        logger.debug(
+            "Interaction XP: user=%d guild=%d command=%s +%d -> %d",
+            inter.author.id,
+            inter.guild_id,
+            inter.data.name,
+            delta,
+            prev_xp + delta,
+        )
 
-    if not catching_up:
-        await announce_level_up(db, bot, prev_xp, curr_xp, inter.author, inter.channel)
+        if not catching_up:
+            await announce_level_up(db, bot, prev_xp, prev_xp + delta, inter.author, inter.channel)
 
-    await db.update_user_score(inter.author.id, inter.guild_id, curr_xp)
-    await db.update_last_message_sent(inter.guild.id, inter.created_at)
+        await db.award_guild_xp(inter.author.id, inter.guild_id, delta, inter.created_at)
+    else:
+        await db.award_global_xp(inter.author.id, delta)

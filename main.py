@@ -38,9 +38,9 @@ async def on_ready() -> None:
 
 @bot.event
 async def on_message(message: disnake.Message) -> None:
-    if message.guild is None:
+    if message.author.bot:
         return
-    if message.author.bot is not True:
+    if message.guild is not None:
         if bot.user in message.mentions:
             cog = bot.get_cog("Chatbot")
             if cog:
@@ -48,6 +48,8 @@ async def on_message(message: disnake.Message) -> None:
         await xp.give_message_xp(database, bot, message, catching_up=False)
         await message_modes.mock_user(database, message)
         await message_modes.binarize_message(database, message)
+    else:
+        await xp.give_message_xp(database, bot, message, catching_up=False)
 
 
 @bot.event
@@ -61,8 +63,8 @@ async def on_guild_join(guild: disnake.Guild) -> None:
 
 @bot.event
 async def on_guild_remove(guild: disnake.Guild) -> None:
-    await database.remove_guild(guild.id)
-    logger.info("Removed from guild %d (%s)", guild.id, guild.name)
+    await database.deactivate_guild(guild.id)
+    logger.info("Deactivated guild %d (%s)", guild.id, guild.name)
 
 
 @bot.event
@@ -119,8 +121,8 @@ async def on_member_join(member: disnake.Member) -> None:
 
 @bot.event
 async def on_member_remove(member: disnake.Member) -> None:
-    await database.remove_user(member.id, member.guild.id)
-    logger.info("Member left: user=%d guild=%d", member.id, member.guild.id)
+    await database.deactivate_member(member.id, member.guild.id)
+    logger.info("Member deactivated: user=%d guild=%d", member.id, member.guild.id)
 
 
 @bot.event
@@ -156,6 +158,7 @@ for filename in os.listdir("./cogs"):
 
 async def main() -> None:
     await database.init_pool()
+    await database.migrate_v2()
     await database.create_tables()
     try:
         await bot.start(config.DISCORD_TOKEN)

@@ -10,13 +10,20 @@ class GuildRepository:
 
     async def add(self, guild_id: int, default_channel_id: Optional[int]) -> None:
         await self._client.execute(
-            "INSERT INTO guilds (guild_id, bot_channel_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+            "INSERT INTO guilds (guild_id, bot_channel_id) VALUES ($1, $2) "
+            "ON CONFLICT (guild_id) DO UPDATE SET active = TRUE",
             [guild_id, default_channel_id],
         )
 
-    async def remove(self, guild_id: int) -> None:
+    async def activate_guild(self, guild_id: int) -> None:
         await self._client.execute(
-            "DELETE FROM guilds WHERE guild_id = $1",
+            "UPDATE guilds SET active = TRUE WHERE guild_id = $1",
+            [guild_id],
+        )
+
+    async def deactivate_guild(self, guild_id: int) -> None:
+        await self._client.execute(
+            "UPDATE guilds SET active = FALSE WHERE guild_id = $1",
             [guild_id],
         )
 

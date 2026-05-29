@@ -94,13 +94,12 @@ async def test_give_message_xp_updates_score():
     message.channel = AsyncMock()
     message.channel.guild.id = 2
 
-    db.current_user_score.return_value = 10
+    db.current_guild_score.return_value = 10
 
     await xp.give_message_xp(db, bot, message, catching_up=True)
 
-    # score = 10 (prev) + 0 (mentions) + 0 (attachments) + 5 (content) = 15
-    db.update_user_score.assert_awaited_once_with(1, 2, 15)
-    db.update_last_message_sent.assert_awaited_once()
+    # delta = 0 (mentions) + 0 (attachments) + 5 (content) = 5
+    db.award_guild_xp.assert_awaited_once_with(1, 2, 5, message.created_at)
 
 
 async def test_give_message_xp_no_level_announce_when_catching_up():
@@ -116,7 +115,7 @@ async def test_give_message_xp_no_level_announce_when_catching_up():
     message.content = "a" * 1000  # big enough to trigger level-up math
     message.channel = AsyncMock()
 
-    db.current_user_score.return_value = 0
+    db.current_guild_score.return_value = 0
     # bot.get_channel should NOT be called
     bot.get_channel = MagicMock()
 
@@ -138,9 +137,10 @@ async def test_give_message_xp_counts_mentions_and_attachments():
     message.channel = AsyncMock()
     message.channel.guild.id = 6
 
-    db.current_user_score.return_value = 0
+    db.current_guild_score.return_value = 0
     db.get_bot_text_channel_id.return_value = None
 
     await xp.give_message_xp(db, bot, message, catching_up=True)
 
-    db.update_user_score.assert_awaited_once_with(5, 6, 22)
+    # delta = 2*5 (mentions) + 1*10 (attachment) + 2 (content) = 22
+    db.award_guild_xp.assert_awaited_once_with(5, 6, 22, message.created_at)
