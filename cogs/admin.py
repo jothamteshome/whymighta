@@ -12,7 +12,7 @@ class Admin(commands.Cog):
     def __init__(self, bot: commands.InteractionBot) -> None:
         self.bot: commands.InteractionBot = bot
 
-    @commands.slash_command()
+    @commands.slash_command(dm_permission=False)
     @commands.is_owner()
     async def admin(self, inter: disnake.ApplicationCommandInteraction) -> None:
         pass

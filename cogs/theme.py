@@ -25,7 +25,8 @@ class Theme(commands.Cog):
         self.database: Database = bot.db
 
     @commands.slash_command(
-        default_member_permissions=disnake.Permissions(administrator=True)
+        default_member_permissions=disnake.Permissions(administrator=True),
+        dm_permission=False,
     )
     async def theme(self, inter: disnake.ApplicationCommandInteraction) -> None:
         pass

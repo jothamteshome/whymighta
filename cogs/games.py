@@ -15,7 +15,7 @@ class Games(commands.Cog):
         self.bot: commands.InteractionBot = bot
         self.database: Database = bot.db
 
-    @commands.slash_command()
+    @commands.slash_command(dm_permission=False)
     async def games(self, inter: disnake.ApplicationCommandInteraction) -> None:
         pass
 

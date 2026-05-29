@@ -77,7 +77,7 @@ async def give_inter_xp(
 ) -> None:
     if inter.data.name in ("level", "leaderboard", "help"):
         return
-    delta = 5 + sum(len(opt) for opt in inter.options)
+    delta = 5 + sum(len(str(v)) for v in inter.options.values())
 
     if inter.guild_id is not None:
         prev_xp = await db.current_guild_score(inter.author.id, inter.guild_id)

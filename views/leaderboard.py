@@ -1,11 +1,14 @@
+from __future__ import annotations
+
 import math
+from typing import Optional
 
 import disnake
 
 from utils import xp
+from utils.theme import DEFAULT_EMBED_COLOR
 
 PAGE_SIZE = 10
-PURPLE = 0x9534eb
 
 
 def _build_pages(rows: list, guild: disnake.Guild, sort: str) -> list[str]:
@@ -31,18 +34,17 @@ def _build_pages(rows: list, guild: disnake.Guild, sort: str) -> list[str]:
 
 
 class LeaderboardView(disnake.ui.View):
-    def __init__(
-        self,
-        pages_guild: list[str],
-        pages_global: list[str],
-        guild_name: str,
-    ) -> None:
+    def __init__(self, rows: list, guild: disnake.Guild) -> None:
         super().__init__(timeout=60)
-        self.pages_guild = pages_guild
-        self.pages_global = pages_global
-        self.guild_name = guild_name
+        self.guild_name = guild.name
         self.current_page = 0
         self.sort = "guild"
+        self.message: Optional[disnake.Message] = None
+
+        rows_global = sorted(rows, key=lambda r: r["global_chat_score"], reverse=True)
+        self.pages_guild = _build_pages(rows, guild, "guild")
+        self.pages_global = _build_pages(rows_global, guild, "global")
+
         self._update_button_states()
 
     @property
@@ -66,7 +68,7 @@ class LeaderboardView(disnake.ui.View):
         embed = disnake.Embed(
             title=f"{self.guild_name} Leaderboard — {sort_label} Score",
             description=pages[self.current_page],
-            color=PURPLE,
+            color=DEFAULT_EMBED_COLOR,
         )
         embed.set_footer(text=f"Page {self.current_page + 1}/{len(pages)}")
         return embed
@@ -100,3 +102,5 @@ class LeaderboardView(disnake.ui.View):
     async def on_timeout(self) -> None:
         for child in self.children:
             child.disabled = True
+        if self.message:
+            await self.message.edit(view=self)

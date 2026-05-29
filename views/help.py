@@ -1,19 +1,24 @@
 from __future__ import annotations
 
+from typing import Optional
+
 import disnake
 from disnake.ext import commands
 
-PURPLE = 0x9534eb
+from utils.theme import DEFAULT_EMBED_COLOR
+
 _EXCLUDED_COGS = {"CogManager", "Admin"}
 
 
-def build_catalog(bot: commands.InteractionBot) -> dict[str, list[dict]]:
+def build_catalog(bot: commands.InteractionBot, in_dm: bool = False) -> dict[str, list[dict]]:
     """Return {cog_name: [command_info, ...]} for all public commands."""
     catalog: dict[str, list[dict]] = {}
 
     for cmd in bot.slash_commands.values():
         cog_name = cmd.cog_name or "Other"
         if cog_name in _EXCLUDED_COGS:
+            continue
+        if in_dm and getattr(cmd, "dm_permission", True) is False:
             continue
 
         admin_only = (
@@ -36,10 +41,6 @@ def build_catalog(bot: commands.InteractionBot) -> dict[str, list[dict]]:
                 sub_commands.append(
                     {"name": sub.name, "description": sub.description or "", "options": options}
                 )
-        else:
-            for opt in cmd.options or []:
-                if hasattr(opt, "type") and str(opt.type) in ("sub_command", "sub_command_group"):
-                    continue
 
         options = []
         if not cmd.children:
@@ -74,12 +75,12 @@ def overview_embed() -> disnake.Embed:
     return disnake.Embed(
         title="whymighta Help",
         description="Select a category below to browse commands.",
-        color=PURPLE,
+        color=DEFAULT_EMBED_COLOR,
     )
 
 
 def category_embed(cog_name: str, cmds: list[dict]) -> disnake.Embed:
-    embed = disnake.Embed(title=f"{cog_name} Commands", color=PURPLE)
+    embed = disnake.Embed(title=f"{cog_name} Commands", color=DEFAULT_EMBED_COLOR)
     for cmd in cmds:
         label = f"/{cmd['name']}"
         desc = cmd["description"] or "No description"
@@ -96,7 +97,7 @@ def command_embed(cmd: dict) -> disnake.Embed:
     embed = disnake.Embed(
         title=title,
         description=cmd["description"] or "No description.",
-        color=PURPLE,
+        color=DEFAULT_EMBED_COLOR,
     )
 
     if cmd["sub_commands"]:
@@ -127,6 +128,7 @@ class HelpView(disnake.ui.View):
         super().__init__(timeout=120)
         self.catalog = catalog
         self.selected_category: str | None = None
+        self.message: Optional[disnake.Message] = None
 
         category_options = [
             disnake.SelectOption(label=name, value=name)
@@ -143,7 +145,6 @@ class HelpView(disnake.ui.View):
         self.selected_category = inter.values[0]
         cmds = self.catalog[self.selected_category]
 
-        # Remove any existing command select
         for child in list(self.children):
             if isinstance(child, disnake.ui.StringSelect) and child is not self._category_select:
                 self.remove_item(child)
@@ -177,3 +178,5 @@ class HelpView(disnake.ui.View):
     async def on_timeout(self) -> None:
         for child in self.children:
             child.disabled = True
+        if self.message:
+            await self.message.edit(view=self)

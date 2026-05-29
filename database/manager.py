@@ -108,7 +108,8 @@ class Database:
                 LIMIT 1
             """)
             if fk_name:
-                await conn.execute(f"ALTER TABLE threads DROP CONSTRAINT {fk_name}")
+                safe_name = await conn.fetchval("SELECT quote_ident($1)", fk_name)
+                await conn.execute(f"ALTER TABLE threads DROP CONSTRAINT {safe_name}")
             await conn.execute("""
                 ALTER TABLE threads ADD CONSTRAINT threads_gm_fk
                 FOREIGN KEY (user_id, guild_id) REFERENCES guild_members (user_id, guild_id)

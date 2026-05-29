@@ -82,7 +82,7 @@ class Chatbot(commands.Cog):
         await message.channel.send(response_text)
 
 
-    @commands.slash_command()
+    @commands.slash_command(dm_permission=False)
     async def chat(self, inter: disnake.ApplicationCommandInteraction) -> None:
         pass
 
