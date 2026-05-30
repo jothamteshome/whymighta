@@ -15,6 +15,8 @@ PAGE_SIZE = 6
 def build_catalog(bot: commands.InteractionBot, in_dm: bool = False) -> dict[str, list[dict]]:
     catalog: dict[str, list[dict]] = {}
 
+    id_map: dict[str, int] = getattr(bot, "slash_command_ids", {})
+
     for cmd in bot.all_slash_commands.values():
         cog_name = cmd.cog_name or "Other"
         if cog_name in _EXCLUDED_COGS:
@@ -27,17 +29,20 @@ def build_catalog(bot: commands.InteractionBot, in_dm: bool = False) -> dict[str
             cmd.default_member_permissions is not None
             and cmd.default_member_permissions.administrator
         )
+        cmd_id = id_map.get(cmd.name)
 
         if cmd.children:
             for sub in cmd.children.values():
                 catalog.setdefault(cog_name, []).append({
                     "path": f"/{cmd.name} {sub.name}",
+                    "mention": f"</{cmd.name} {sub.name}:{cmd_id}>" if cmd_id else None,
                     "description": sub.description or "",
                     "admin_only": admin_only,
                 })
         else:
             catalog.setdefault(cog_name, []).append({
                 "path": f"/{cmd.name}",
+                "mention": f"</{cmd.name}:{cmd_id}>" if cmd_id else None,
                 "description": cmd.description or "",
                 "admin_only": admin_only,
             })
@@ -83,7 +88,7 @@ def category_embed(cog_name: str, cmds: list[dict], page: int) -> disnake.Embed:
         color=DEFAULT_EMBED_COLOR,
     )
     for entry in page_cmds:
-        label = f"`{entry['path']}`" + ("  ⚙️" if entry["admin_only"] else "")
+        label = (entry["mention"] or f"{entry['path']}") + ("  ⚙️" if entry["admin_only"] else "")
         embed.add_field(name=label, value=entry["description"] or "No description", inline=False)
     return embed
 
@@ -108,8 +113,11 @@ class HelpView(disnake.ui.View):
         select = disnake.ui.StringSelect(
             placeholder="Select a category...",
             options=[
-                disnake.SelectOption(label=name, value=name, default=(name == self.current_category))
-                for name in sorted(self.catalog)
+                disnake.SelectOption(label="Categories", value="__overview__", default=(self.current_category is None)),
+                *[
+                    disnake.SelectOption(label=name, value=name, default=(name == self.current_category))
+                    for name in sorted(self.catalog)
+                ],
             ],
             row=0,
         )
@@ -130,7 +138,7 @@ class HelpView(disnake.ui.View):
             self.add_item(prev)
 
         close = disnake.ui.Button(
-            emoji="✖️",
+            emoji="🇽",
             style=disnake.ButtonStyle.danger if on_overview else disnake.ButtonStyle.secondary,
             row=1,
         )
@@ -148,6 +156,12 @@ class HelpView(disnake.ui.View):
             self.add_item(nxt)
 
     async def _on_category_select(self, inter: disnake.MessageInteraction) -> None:
+        if inter.values[0] == "__overview__":
+            self.current_category = None
+            self.page = 0
+            self._rebuild_components()
+            await inter.response.edit_message(content="", embed=overview_embed(self.catalog), view=self)
+            return
         self.current_category = inter.values[0]
         self.page = 0
         self._rebuild_components()
