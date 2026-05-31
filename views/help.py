@@ -131,7 +131,7 @@ class HelpView(disnake.ui.View):
                 disnake.SelectOption(
                     label="Categories",
                     value="__overview__",
-                    emoji=disnake.PartialEmoji(name="discord_slash", id=1510472590567673886),
+                    emoji="📋",
                     default=(self.current_category is None),
                 ),
                 *[
