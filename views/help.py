@@ -98,7 +98,7 @@ def category_embed(
     display_name, emoji = _cog_meta(bot, cog_name)
     title_prefix = f"{emoji} " if emoji else ""
     embed = disnake.Embed(
-        title=f"{title_prefix}{display_name} Commands ({len(cmds)})",
+        title=f"Commands ({len(cmds)})",
         color=DEFAULT_EMBED_COLOR,
     )
     for entry in page_cmds:
