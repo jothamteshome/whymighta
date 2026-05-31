@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 bot = commands.InteractionBot(
     intents=disnake.Intents.all(),
     default_install_types=disnake.ApplicationInstallTypes(guild=True),
+    command_sync_flags=commands.CommandSyncFlags.all(),
 )
 
 _client = AsyncDatabaseClient(
@@ -38,6 +39,17 @@ async def on_ready() -> None:
     await startup.server_message_catchup(bot, database)
 
     cmds = await bot.fetch_global_commands()
+    logger.info("Global commands registered with Discord: %d", len(cmds))
+
+    if not cmds:
+        global_cmds, _ = bot._ordered_unsynced_commands(None)
+        logger.warning("Discord has 0 global commands; forcing sync of %d local commands", len(global_cmds))
+        try:
+            await bot.bulk_overwrite_global_commands(global_cmds)
+            logger.info("Force sync complete")
+            cmds = await bot.fetch_global_commands()
+        except Exception as e:
+            logger.error("Force sync failed: %s", e)
 
     bot.slash_command_ids = {
         c.name: c.id

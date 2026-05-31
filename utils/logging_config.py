@@ -22,4 +22,4 @@ def configure_logger(level: int = logging.INFO) -> None:
     # Suppress noisy disnake internals regardless of root level
     logging.getLogger("disnake.gateway").setLevel(logging.ERROR)
     logging.getLogger("disnake.client").setLevel(logging.ERROR)
-    logging.getLogger("disnake.http").setLevel(logging.ERROR)
+    logging.getLogger("disnake.http").setLevel(logging.WARNING)
