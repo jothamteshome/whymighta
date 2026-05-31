@@ -4,6 +4,7 @@ import os
 import disnake
 from disnake import ApplicationCommandInteraction, Embed
 from disnake.ext import commands
+from utils.constants import DEFAULT_EMBED_COLOR
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +23,7 @@ class CogManager(commands.Cog):
         await inter.response.defer(ephemeral=True)
         embed = Embed()
 
-        embed = Embed(title="Available Cogs", description=f"\n{'-' * 25}", color=0x9534eb)          
+        embed = Embed(title="Available Cogs", description=f"\n{'-' * 25}", color=DEFAULT_EMBED_COLOR)          
 
         for filename in os.listdir("./cogs"):
             if filename.endswith(".py"):

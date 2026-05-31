@@ -1,6 +1,7 @@
 import disnake, logging
 from disnake.ext import commands
 from utils import admin as utils_admin
+from utils.constants import DEFAULT_EMBED_COLOR
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +23,7 @@ class Admin(commands.Cog):
         await inter.response.defer(ephemeral=True)
         guilds = await utils_admin.clear_guild_commands(self.bot)
 
-        embed = disnake.Embed(title="Guilds Cleared", description=f"\n{'-' * 25}", color=0x9534eb)
+        embed = disnake.Embed(title="Guilds Cleared", description=f"\n{'-' * 25}", color=DEFAULT_EMBED_COLOR)
         for guild in guilds:
             embed.add_field(name=f"• {guild.id} - {guild.name}", value="", inline=False)
 

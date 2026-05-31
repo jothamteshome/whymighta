@@ -5,6 +5,7 @@ from models.theme import GuildTheme
 from pydantic import ValidationError
 from typing import Optional, TYPE_CHECKING
 from utils import theme as utils_theme
+from utils.constants import DEFAULT_EMBED_COLOR
 
 if TYPE_CHECKING:
     from database.manager import Database
@@ -41,7 +42,7 @@ class Server(commands.Cog):
         mock, binary = await self.database.get_guild_config(inter.guild.id)
         theme = await utils_theme.get_guild_theme(self.database, inter.guild.id)
 
-        embed = disnake.Embed(title="Bot Status", color=0x9534eb)
+        embed = disnake.Embed(title="Bot Status", color=DEFAULT_EMBED_COLOR)
         embed.add_field(name="Bot Channel", value=channel_value, inline=False)
         embed.add_field(name="Mock Mode", value="On" if mock else "Off", inline=True)
         embed.add_field(name="Binary Mode", value="On" if binary else "Off", inline=True)

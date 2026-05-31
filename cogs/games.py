@@ -3,6 +3,7 @@ from disnake import Embed
 from disnake.ext import commands
 from database.manager import Database
 from utils import fortnite as utils_fortnite
+from utils.constants import DEFAULT_EMBED_COLOR
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +27,7 @@ class Games(commands.Cog):
     async def list(self, inter: disnake.ApplicationCommandInteraction) -> None:
         await inter.response.defer()
 
-        embed = Embed(title="Games List", description=f"\n{'-' * 25}", color=0x9534eb)
+        embed = Embed(title="Games List", description=f"\n{'-' * 25}", color=DEFAULT_EMBED_COLOR)
         games_list = await self.database.get_all_games_from_list(inter.guild.id)
 
         for game in games_list:
