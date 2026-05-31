@@ -85,7 +85,10 @@ class Chatbot(commands.Cog):
         await message.channel.send(response_text)
 
 
-    @commands.slash_command(contexts=disnake.InteractionContextTypes(guild=True))
+    @commands.slash_command(
+            description="Private thread chat session commands", 
+            contexts=disnake.InteractionContextTypes(guild=True)
+        )
     async def chat(self, inter: disnake.ApplicationCommandInteraction) -> None:
         pass
 
@@ -144,7 +147,7 @@ class Chatbot(commands.Cog):
         author_thread_id = await self.database.get_thread_id(inter.guild.id, inter.author.id)
 
         if not author_thread_id:
-            await inter.edit_original_response(f"No thead exists for {inter.author.name} in guild {inter.guild.name}.")
+            await inter.edit_original_response(f"No thread exists for {inter.author.name} in guild {inter.guild.name}.")
             return
 
         # Delete user's thread

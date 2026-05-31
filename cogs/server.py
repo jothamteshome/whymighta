@@ -70,7 +70,11 @@ class Server(commands.Cog):
         pass
 
     @theme.sub_command(description="Randomly updates server nicknames based on those found in uploaded file")
-    async def apply(self, inter: disnake.ApplicationCommandInteraction, file: disnake.Attachment) -> None:
+    async def apply(
+        self, inter: 
+        disnake.ApplicationCommandInteraction, 
+        file: disnake.Attachment = commands.Param(description="JSON file containing theme data")
+    ) -> None:
         await inter.response.defer()
 
         if "application/json" not in file.content_type:
@@ -222,10 +226,11 @@ class Server(commands.Cog):
         default_member_permissions=disnake.Permissions(administrator=True),
         contexts=disnake.InteractionContextTypes(guild=True),
     )
-    async def purge(self, inter: disnake.ApplicationCommandInteraction, number: int = 5) -> None:
-        if number < 1 or number > 100:
-            await inter.response.send_message("Number must be between 1 and 100.")
-            return
+    async def purge(
+        self, 
+        inter: disnake.ApplicationCommandInteraction, 
+        number: int = commands.Param(default=5, ge=1, le=100, description="Number of messages to delete (1-100)")
+    ) -> None:
         message_str = "message" if number == 1 else "messages"
         logger.info(
             "Purge: %d messages in channel %d (guild %d) by user %d",

@@ -15,7 +15,10 @@ class Games(commands.Cog):
         self.bot: commands.InteractionBot = bot
         self.database: Database = bot.db
 
-    @commands.slash_command(contexts=disnake.InteractionContextTypes(guild=True))
+    @commands.slash_command(
+            description="Game list and selection commands", 
+            contexts=disnake.InteractionContextTypes(guild=True)
+        )
     async def games(self, inter: disnake.ApplicationCommandInteraction) -> None:
         pass
 
@@ -32,7 +35,11 @@ class Games(commands.Cog):
         await inter.edit_original_message(embed=embed)
 
     @games.sub_command(description="Add game to the games list")
-    async def add(self, inter: disnake.ApplicationCommandInteraction, name: str) -> None:
+    async def add(
+        self, 
+        inter: disnake.ApplicationCommandInteraction, 
+        name: str = commands.Param(description="Game to add to the list")
+    ) -> None:
         await inter.response.defer()
 
         game = await self.database.get_game_from_list(inter.guild.id, name)
@@ -44,7 +51,11 @@ class Games(commands.Cog):
             await inter.edit_original_message(f"{name} added to games list")
 
     @games.sub_command(description="Remove game from the games list")
-    async def remove(self, inter: disnake.ApplicationCommandInteraction, name: str) -> None:
+    async def remove(
+        self, 
+        inter: disnake.ApplicationCommandInteraction, 
+        name: str = commands.Param(description="Game to remove from the list")
+    ) -> None:
         await inter.response.defer()
 
         game = await self.database.get_game_from_list(inter.guild.id, name)
@@ -69,7 +80,7 @@ class Games(commands.Cog):
             random_game = random.choice(games)["game_name"]
             await inter.edit_original_message(f"You should play {random_game}!")
 
-    @commands.slash_command()
+    @commands.slash_command(description="Fortnite utilities")
     async def fortnite(self, inter: disnake.ApplicationCommandInteraction) -> None:
         pass
 
