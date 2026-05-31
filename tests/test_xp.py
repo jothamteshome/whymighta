@@ -6,15 +6,15 @@ import pytest
 from utils import xp
 
 
-def test_check_level_zero():
-    assert xp.check_level(0) == 0.0
+def test_check_level_one():
+    assert xp.check_level(0) == 1.0
 
 
 def test_check_level_known_values():
-    # 32 ** (1/5) == 2.0
-    assert xp.check_level(32) == pytest.approx(2.0)
+    # 32 ** (1/5) + 1 == 3.0
+    assert xp.check_level(32) == pytest.approx(3.0)
     # 243 ** (1/5) == 3.0
-    assert xp.check_level(243) == pytest.approx(3.0)
+    assert xp.check_level(243) == pytest.approx(4.0)
 
 
 def test_check_level_returns_float():
@@ -26,7 +26,7 @@ def test_check_level_returns_float():
 # ---------------------------------------------------------------------------
 
 async def test_announce_level_up_fires_on_new_level():
-    """prev=0 -> curr=32 crosses level boundary (floor(0^(1/5))=0, floor(32^(1/5))=2)."""
+    """prev=0 -> curr=32 crosses level boundary (floor(0^(1/5) + 1)=1, floor(32^(1/5) + 1)=3)."""
     db = AsyncMock()
     bot = MagicMock()
     channel = AsyncMock()
@@ -41,11 +41,11 @@ async def test_announce_level_up_fires_on_new_level():
     await xp.announce_level_up(db, bot, previous_xp=0, current_xp=32, user=user, channel=channel)
 
     channel.send.assert_awaited_once()
-    assert "Level 2" in channel.send.call_args[0][0]
+    assert "Level 3" in channel.send.call_args[0][0]
 
 
 async def test_announce_level_up_silent_when_no_new_level():
-    """prev=1 -> curr=2 does not cross a level boundary."""
+    """prev=1 -> curr=2 does not cross a level boundary (floor(1^(1/5) + 1)=1, floor(2^(1/5) + 1)=1)."""
     db = AsyncMock()
     bot = MagicMock()
     channel = AsyncMock()

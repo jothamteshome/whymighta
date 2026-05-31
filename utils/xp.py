@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 def check_level(score: int) -> float:
-    return score ** (1 / 5)
+    return score ** (1 / 5) + 1
 
 
 async def announce_level_up(
