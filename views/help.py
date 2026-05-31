@@ -129,7 +129,7 @@ class HelpView(disnake.ui.View):
 
         if not on_overview:
             prev = disnake.ui.Button(
-                emoji="◀",
+                label="◀",
                 style=disnake.ButtonStyle.secondary,
                 row=1,
                 disabled=(self.page == 0),
@@ -138,7 +138,7 @@ class HelpView(disnake.ui.View):
             self.add_item(prev)
 
         close = disnake.ui.Button(
-            emoji="🇽",
+            label="✖",
             style=disnake.ButtonStyle.danger if on_overview else disnake.ButtonStyle.secondary,
             row=1,
         )
@@ -147,7 +147,7 @@ class HelpView(disnake.ui.View):
 
         if not on_overview:
             nxt = disnake.ui.Button(
-                emoji="▶",
+                label="▶",
                 style=disnake.ButtonStyle.secondary,
                 row=1,
                 disabled=(self.page >= total - 1),
