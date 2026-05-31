@@ -19,7 +19,8 @@ class Help(commands.Cog):
             inter.guild_id is not None
             and inter.author.guild_permissions.administrator
         )
-        catalog = build_catalog(self.bot, in_dm=inter.guild_id is None, is_admin=is_admin)
+        is_owner = await self.bot.is_owner(inter.author)
+        catalog = build_catalog(self.bot, in_dm=inter.guild_id is None, is_admin=is_admin, is_owner=is_owner)
         view = HelpView(self.bot, catalog)
         await inter.edit_original_response(embed=overview_embed(self.bot, catalog), view=view)
         view.message = await inter.original_message()

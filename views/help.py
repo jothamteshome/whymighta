@@ -8,7 +8,7 @@ from disnake.ext import commands
 
 from utils.theme import DEFAULT_EMBED_COLOR
 
-_EXCLUDED_COGS = {"CogManager", "Admin", "Help"}
+_EXCLUDED_COGS = {"CogManager", "Help"}
 PAGE_SIZE = 6
 
 
@@ -20,7 +20,10 @@ def _cog_meta(bot: commands.InteractionBot, cog_name: str) -> tuple[str, str | N
 
 
 def build_catalog(
-    bot: commands.InteractionBot, in_dm: bool = False, is_admin: bool = False
+    bot: commands.InteractionBot,
+    in_dm: bool = False,
+    is_admin: bool = False,
+    is_owner: bool = False,
 ) -> dict[str, list[dict]]:
     catalog: dict[str, list[dict]] = {}
     id_map: dict[str, int] = getattr(bot, "slash_command_ids", {})
@@ -28,6 +31,8 @@ def build_catalog(
     for cmd in bot.all_slash_commands.values():
         cog_name = cmd.cog_name or "Other"
         if cog_name in _EXCLUDED_COGS:
+            continue
+        if cog_name == "Admin" and not is_owner:
             continue
         cmd_contexts = getattr(cmd, "contexts", None)
         if in_dm and cmd_contexts is not None and not cmd_contexts.bot_dm:
