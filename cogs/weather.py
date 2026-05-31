@@ -9,6 +9,9 @@ logger = logging.getLogger(__name__)
 
 
 class Weather(commands.Cog):
+    category_display_name = "Weather"
+    category_emoji = "☁️"
+
     def __init__(self, bot: commands.InteractionBot) -> None:
         self.bot: commands.InteractionBot = bot
 

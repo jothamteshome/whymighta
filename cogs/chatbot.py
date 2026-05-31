@@ -16,6 +16,9 @@ logger = logging.getLogger(__name__)
 
 
 class Chatbot(commands.Cog):
+    category_display_name = "Chatbot"
+    category_emoji = "💬"
+
     def __init__(self, bot: commands.InteractionBot) -> None:
         self.bot: commands.InteractionBot = bot
         self.database: Database = bot.db

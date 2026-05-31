@@ -20,6 +20,9 @@ logger = logging.getLogger(__name__)
 
 
 class Theme(commands.Cog):
+    category_display_name = "Theme"
+    category_emoji = "🎨"
+
     def __init__(self, bot: commands.InteractionBot) -> None:
         self.bot: commands.InteractionBot = bot
         self.database: Database = bot.db

@@ -7,6 +7,9 @@ logger = logging.getLogger(__name__)
 
 
 class Moderation(commands.Cog):
+    category_display_name = "Moderation"
+    category_emoji = "🔨"
+
     def __init__(self, bot: commands.InteractionBot) -> None:
         self.bot: commands.InteractionBot = bot
 

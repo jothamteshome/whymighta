@@ -12,9 +12,17 @@ _EXCLUDED_COGS = {"CogManager", "Admin", "Help"}
 PAGE_SIZE = 6
 
 
-def build_catalog(bot: commands.InteractionBot, in_dm: bool = False) -> dict[str, list[dict]]:
-    catalog: dict[str, list[dict]] = {}
+def _cog_meta(bot: commands.InteractionBot, cog_name: str) -> tuple[str, str | None]:
+    cog = bot.get_cog(cog_name)
+    display_name = getattr(cog, "category_display_name", cog_name) if cog else cog_name
+    emoji = getattr(cog, "category_emoji", None) if cog else None
+    return display_name, emoji
 
+
+def build_catalog(
+    bot: commands.InteractionBot, in_dm: bool = False, is_admin: bool = False
+) -> dict[str, list[dict]]:
+    catalog: dict[str, list[dict]] = {}
     id_map: dict[str, int] = getattr(bot, "slash_command_ids", {})
 
     for cmd in bot.all_slash_commands.values():
@@ -29,6 +37,9 @@ def build_catalog(bot: commands.InteractionBot, in_dm: bool = False) -> dict[str
             cmd.default_member_permissions is not None
             and cmd.default_member_permissions.administrator
         )
+        if admin_only and not is_admin:
+            continue
+
         cmd_id = id_map.get(cmd.name)
 
         if cmd.children:
@@ -50,14 +61,13 @@ def build_catalog(bot: commands.InteractionBot, in_dm: bool = False) -> dict[str
     return catalog
 
 
-def overview_embed(catalog: dict[str, list[dict]]) -> disnake.Embed:
+def overview_embed(bot: commands.InteractionBot, catalog: dict[str, list[dict]]) -> disnake.Embed:
     num_categories = len(catalog)
     num_commands = sum(len(cmds) for cmds in catalog.values())
     overview = disnake.Embed(
         title="Commands for whymighta",
         color=DEFAULT_EMBED_COLOR,
     )
-
     overview.add_field(
         name="**» Help menu**",
         value=(
@@ -65,12 +75,12 @@ def overview_embed(catalog: dict[str, list[dict]]) -> disnake.Embed:
             f"`{num_commands}` commands for you to explore."
         ),
     )
-
     categories = sorted(catalog)
-    col_width = max(len(c) for c in categories) + 4
+    display_names = [_cog_meta(bot, c)[0] for c in categories]
+    col_width = max(len(n) for n in display_names) + 4
     rows = [
-        "".join(c.ljust(col_width) for c in categories[i : i + 3])
-        for i in range(0, len(categories), 3)
+        "".join(display_names[i + j].ljust(col_width) for j in range(min(3, len(display_names) - i)))
+        for i in range(0, len(display_names), 3)
     ]
     overview.add_field(
         name="**» Categories**",
@@ -80,22 +90,27 @@ def overview_embed(catalog: dict[str, list[dict]]) -> disnake.Embed:
     return overview
 
 
-def category_embed(cog_name: str, cmds: list[dict], page: int) -> disnake.Embed:
+def category_embed(
+    bot: commands.InteractionBot, cog_name: str, cmds: list[dict], page: int
+) -> disnake.Embed:
     start = page * PAGE_SIZE
     page_cmds = cmds[start : start + PAGE_SIZE]
+    display_name, emoji = _cog_meta(bot, cog_name)
+    title_prefix = f"{emoji} " if emoji else ""
     embed = disnake.Embed(
-        title=f"Commands ({len(cmds)})",
+        title=f"{title_prefix}{display_name} Commands ({len(cmds)})",
         color=DEFAULT_EMBED_COLOR,
     )
     for entry in page_cmds:
-        label = (entry["mention"] or f"{entry['path']}") + ("  ⚙️" if entry["admin_only"] else "")
+        label = (entry["mention"] or entry["path"])
         embed.add_field(name=label, value=entry["description"] or "No description", inline=False)
     return embed
 
 
 class HelpView(disnake.ui.View):
-    def __init__(self, catalog: dict[str, list[dict]]) -> None:
+    def __init__(self, bot: commands.InteractionBot, catalog: dict[str, list[dict]]) -> None:
         super().__init__(timeout=None)
+        self.bot = bot
         self.catalog = catalog
         self.current_category: str | None = None
         self.page: int = 0
@@ -113,9 +128,19 @@ class HelpView(disnake.ui.View):
         select = disnake.ui.StringSelect(
             placeholder="Select a category...",
             options=[
-                disnake.SelectOption(label="Categories", value="__overview__", default=(self.current_category is None)),
+                disnake.SelectOption(
+                    label="Categories",
+                    value="__overview__",
+                    emoji=disnake.PartialEmoji(name="discord_slash", id=1510472590567673886),
+                    default=(self.current_category is None),
+                ),
                 *[
-                    disnake.SelectOption(label=name, value=name, default=(name == self.current_category))
+                    disnake.SelectOption(
+                        label=_cog_meta(self.bot, name)[0],
+                        value=name,
+                        emoji=_cog_meta(self.bot, name)[1],
+                        default=(name == self.current_category),
+                    )
                     for name in sorted(self.catalog)
                 ],
             ],
@@ -160,7 +185,9 @@ class HelpView(disnake.ui.View):
             self.current_category = None
             self.page = 0
             self._rebuild_components()
-            await inter.response.edit_message(content="", embed=overview_embed(self.catalog), view=self)
+            await inter.response.edit_message(
+                content="", embed=overview_embed(self.bot, self.catalog), view=self
+            )
             return
         self.current_category = inter.values[0]
         self.page = 0
@@ -168,7 +195,7 @@ class HelpView(disnake.ui.View):
         cmds = self.catalog[self.current_category]
         await inter.response.edit_message(
             content=f"Page {self.page + 1} of {self._total_pages()}",
-            embed=category_embed(self.current_category, cmds, self.page),
+            embed=category_embed(self.bot, self.current_category, cmds, self.page),
             view=self,
         )
 
@@ -178,7 +205,7 @@ class HelpView(disnake.ui.View):
         cmds = self.catalog[self.current_category]
         await inter.response.edit_message(
             content=f"Page {self.page + 1} of {self._total_pages()}",
-            embed=category_embed(self.current_category, cmds, self.page),
+            embed=category_embed(self.bot, self.current_category, cmds, self.page),
             view=self,
         )
 
@@ -188,7 +215,7 @@ class HelpView(disnake.ui.View):
         cmds = self.catalog[self.current_category]
         await inter.response.edit_message(
             content=f"Page {self.page + 1} of {self._total_pages()}",
-            embed=category_embed(self.current_category, cmds, self.page),
+            embed=category_embed(self.bot, self.current_category, cmds, self.page),
             view=self,
         )
 

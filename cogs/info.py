@@ -10,6 +10,9 @@ logger = logging.getLogger(__name__)
 
 
 class Info(commands.Cog):
+    category_display_name = "Info"
+    category_emoji = "ℹ️"
+
     def __init__(self, bot: commands.InteractionBot) -> None:
         self.bot: commands.InteractionBot = bot
         self.database: Database = bot.db
