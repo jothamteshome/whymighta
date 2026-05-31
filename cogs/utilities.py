@@ -8,7 +8,6 @@ from disnake.ext import commands
 
 from database.manager import Database
 from utils import xp
-from utils.image_utils import imprison_member
 from views.leaderboard import LeaderboardView
 from utils.theme import DEFAULT_EMBED_COLOR
 
@@ -76,24 +75,6 @@ class Utilities(commands.Cog):
         view = LeaderboardView(rows, inter.guild)
         await inter.edit_original_message(embed=view.get_embed(), view=view)
         view.message = await inter.original_message()
-
-    @commands.slash_command(description="Puts a deserving criminal behind bars", contexts=disnake.InteractionContextTypes(guild=True))
-    async def jail(self, inter: ApplicationCommandInteraction, name: str) -> None:
-        members = {member.name: member for member in inter.guild.members}
-        nicknames = {member.nick: member for member in inter.guild.members if member.nick}
-
-        member = members.get(name) or nicknames.get(name)
-
-        if member is None:
-            await inter.response.send_message(
-                "User does not exist. Please try again with the user's discord name"
-            )
-            return
-
-        await inter.response.send_message("Generating Image...")
-        jailed_image = await imprison_member(member)
-        await inter.edit_original_response(content="", file=jailed_image)
-
 
 def setup(bot: commands.InteractionBot) -> None:
     bot.add_cog(Utilities(bot))

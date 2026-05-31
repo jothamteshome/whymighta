@@ -36,10 +36,12 @@ bot.db = database
 async def on_ready() -> None:
     await startup.update_new_members(bot, database)
     await startup.server_message_catchup(bot, database)
-    global_cmds = await bot.fetch_global_commands()
+
+    cmds = await bot.fetch_global_commands()
+
     bot.slash_command_ids = {
         c.name: c.id
-        for c in global_cmds
+        for c in cmds
         if c.type == disnake.ApplicationCommandType.chat_input
     }
     logger.info("Logged in as %s", bot.user)
