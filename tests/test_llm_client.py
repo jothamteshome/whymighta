@@ -66,7 +66,7 @@ async def test_openai_client_complete_returns_content():
     assert result == "Hello!"
 
 
-def test_openai_client_maps_username_to_name():
+async def test_openai_client_maps_username_to_name():
     """username key on user messages should become name; assistant messages untouched."""
     mock_response = MagicMock()
     mock_response.choices[0].message.content = "Hi"
@@ -74,18 +74,13 @@ def test_openai_client_maps_username_to_name():
     mock_openai_instance = MagicMock()
     mock_openai_instance.chat.completions.create = AsyncMock(return_value=mock_response)
 
-    import asyncio
-
-    async def run():
-        with patch("llm.client.config") as mock_cfg, \
-             patch("llm.client.openai.AsyncOpenAI", return_value=mock_openai_instance):
-            mock_cfg.OPENAI_API_KEY = "sk-test"
-            mock_cfg.OPENAI_MODEL = "gpt-4.1-mini"
-            client = OpenAIClient()
-            history = [{"role": "user", "content": "Hi", "username": "mention_alice"}]
-            await client.complete("system", history)
-
-    asyncio.get_event_loop().run_until_complete(run())
+    with patch("llm.client.config") as mock_cfg, \
+         patch("llm.client.openai.AsyncOpenAI", return_value=mock_openai_instance):
+        mock_cfg.OPENAI_API_KEY = "sk-test"
+        mock_cfg.OPENAI_MODEL = "gpt-4.1-mini"
+        client = OpenAIClient()
+        history = [{"role": "user", "content": "Hi", "username": "mention_alice"}]
+        await client.complete("system", history)
 
     call_kwargs = mock_openai_instance.chat.completions.create.call_args.kwargs
     messages = call_kwargs["messages"]
