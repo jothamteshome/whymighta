@@ -58,6 +58,8 @@ def build_catalog(
                 "admin_only": admin_only,
             })
 
+    for entries in catalog.values():
+        entries.sort(key=lambda e: e["path"])
     return catalog
 
 
