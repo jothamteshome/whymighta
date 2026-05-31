@@ -238,5 +238,5 @@ class Server(commands.Cog):
         await inter.channel.purge(limit=number + 1)
 
 
-# def setup(bot: commands.InteractionBot) -> None:
-#     bot.add_cog(Server(bot))
+def setup(bot: commands.InteractionBot) -> None:
+    bot.add_cog(Server(bot))
