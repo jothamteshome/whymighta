@@ -72,9 +72,25 @@ class Utilities(commands.Cog):
             await inter.edit_original_message(embed=embed)
             return
 
-        view = LeaderboardView(rows, inter.guild)
-        await inter.edit_original_message(embed=view.get_embed(), view=view)
-        view.message = await inter.original_message()
+        names: dict[int, str] = {}
+        for row in rows:
+            uid = row["user_id"]
+            member = inter.guild.get_member(uid)
+            if member:
+                names[uid] = member.name
+            else:
+                try:
+                    user = await self.bot.fetch_user(uid)
+                    names[uid] = user.name
+                except (disnake.NotFound, disnake.HTTPException):
+                    names[uid] = str(uid)
+
+        view = LeaderboardView(rows, inter.guild.name, names)
+        await inter.edit_original_message(
+            content=f"Page 1 of {view.total_pages}",
+            embed=view.get_embed(),
+            view=view,
+        )
 
 def setup(bot: commands.InteractionBot) -> None:
     bot.add_cog(Utilities(bot))
