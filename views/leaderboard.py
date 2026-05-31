@@ -6,7 +6,7 @@ from typing import Optional
 import disnake
 
 from utils import xp
-from utils.theme import DEFAULT_EMBED_COLOR
+from utils.constants import DEFAULT_EMBED_COLOR
 
 PAGE_SIZE = 10
 

@@ -2,7 +2,7 @@ import disnake, logging, random
 from disnake import Embed
 from disnake.ext import commands
 from database.manager import Database
-from utils import fortnite as fortnite_utils
+from utils import fortnite as utils_fortnite
 
 logger = logging.getLogger(__name__)
 
@@ -87,8 +87,8 @@ class Games(commands.Cog):
     @fortnite.sub_command(description="Select a random drop location in Fortnite")
     async def drop(self, inter: disnake.ApplicationCommandInteraction) -> None:
         await inter.response.defer()
-        named_drops = await fortnite_utils.fetch_named_locations()
-        await inter.edit_original_message(f"You should drop at {fortnite_utils.select_location(named_drops)}!")
+        named_drops = await utils_fortnite.fetch_named_locations()
+        await inter.edit_original_message(f"You should drop at {utils_fortnite.select_location(named_drops)}!")
 
 
 def setup(bot: commands.InteractionBot) -> None:

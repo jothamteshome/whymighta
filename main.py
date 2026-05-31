@@ -10,10 +10,9 @@ from core.config import config
 from database.client import AsyncDatabaseClient
 from database.manager import Database
 from models.theme import GuildTheme
-from utils import message_modes, startup, xp
-from utils.logging_config import configure_logger
+from utils import message_modes, startup, logs as utils_logs, xp
 
-configure_logger()
+utils_logs.configure_logger()
 logger = logging.getLogger(__name__)
 
 bot = commands.InteractionBot(

@@ -6,7 +6,7 @@ from typing import Optional
 import disnake
 from disnake.ext import commands
 
-from utils.theme import DEFAULT_EMBED_COLOR
+from utils.constants import DEFAULT_EMBED_COLOR
 
 _EXCLUDED_COGS = {"CogManager", "Help"}
 PAGE_SIZE = 6

@@ -2,7 +2,7 @@ import disnake, logging
 from aiohttp import ClientSession
 from core.config import config
 from disnake.ext import commands
-from utils.image_utils import imprison_member
+from utils import image as utils_image
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +31,7 @@ class Misc(commands.Cog):
             return
 
         await inter.response.send_message("Generating Image...")
-        jailed_image = await imprison_member(member)
+        jailed_image = await utils_image.imprison_member(member)
         await inter.edit_original_response(content="", file=jailed_image)
 
 

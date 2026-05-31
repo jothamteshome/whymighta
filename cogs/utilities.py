@@ -9,7 +9,7 @@ from disnake.ext import commands
 from database.manager import Database
 from utils import xp
 from views.leaderboard import LeaderboardView
-from utils.theme import DEFAULT_EMBED_COLOR
+from utils.constants import DEFAULT_EMBED_COLOR
 
 logger = logging.getLogger(__name__)
 

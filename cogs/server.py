@@ -1,20 +1,14 @@
-import json
-import logging
-from io import BytesIO
-from typing import Optional
-
-import disnake
+import disnake, json, logging
 from disnake.ext import commands
-from pydantic import ValidationError
-
-from database.manager import Database
+from io import BytesIO
 from models.theme import GuildTheme
-from utils.theme_utils import (
-    add_theme_fields,
-    apply_guild_appearance,
-    assign_nicknames,
-    get_guild_theme,
-)
+from pydantic import ValidationError
+from typing import Optional, TYPE_CHECKING
+from utils import theme as utils_theme
+
+if TYPE_CHECKING:
+    from database.manager import Database
+
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +19,7 @@ class Server(commands.Cog):
 
     def __init__(self, bot: commands.InteractionBot) -> None:
         self.bot: commands.InteractionBot = bot
-        self.database: Database = bot.db
+        self.database: "Database" = bot.db
 
     # ---- /server ----
 
@@ -45,7 +39,7 @@ class Server(commands.Cog):
             channel_value = "Not set"
 
         mock, binary = await self.database.get_guild_config(inter.guild.id)
-        theme = await get_guild_theme(self.database, inter.guild.id)
+        theme = await utils_theme.get_guild_theme(self.database, inter.guild.id)
 
         embed = disnake.Embed(title="Bot Status", color=0x9534eb)
         embed.add_field(name="Bot Channel", value=channel_value, inline=False)
@@ -54,7 +48,7 @@ class Server(commands.Cog):
 
         if theme:
             bot_nick = inter.guild.me.nick or "None assigned"
-            add_theme_fields(embed, theme, bot_nick)
+            utils_theme.add_theme_fields(embed, theme, bot_nick)
         else:
             embed.add_field(name="Theme", value="Not set", inline=False)
 
@@ -106,14 +100,14 @@ class Server(commands.Cog):
 
         logger.debug("JSON loaded: %d names, %d members", len(theme_data.names), len(members))
 
-        skipped = await assign_nicknames(inter.guild, theme_data.names)
+        skipped = await utils_theme.assign_nicknames(inter.guild, theme_data.names)
         await inter.edit_original_message("Random nicknames have been assigned")
 
         if skipped:
             lines = "\n".join(f"`{name}` — {nick}" for name, nick in skipped)
             await inter.channel.send(f"**Could not assign nicknames for:**\n{lines}")
 
-        appearance_feedback = await apply_guild_appearance(inter.guild, theme_data)
+        appearance_feedback = await utils_theme.apply_guild_appearance(inter.guild, theme_data)
         for message in appearance_feedback:
             await inter.channel.send(message)
 
@@ -152,7 +146,7 @@ class Server(commands.Cog):
     ) -> None:
         await inter.response.defer()
 
-        theme_data = await get_guild_theme(self.database, inter.guild.id)
+        theme_data = await utils_theme.get_guild_theme(self.database, inter.guild.id)
         if not theme_data:
             await inter.edit_original_message("No theme is currently set.")
             return
