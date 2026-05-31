@@ -18,7 +18,7 @@ class Admin(commands.Cog):
         pass
 
     @admin.sub_command(description="Clears all guild application commands")
-    async def clear_commands(self, inter: disnake.ApplicationCommandInteraction) -> None:
+    async def clear_guild_commands(self, inter: disnake.ApplicationCommandInteraction) -> None:
         await inter.response.defer(ephemeral=True)
         guilds = await clear_guild_commands(self.bot)
 
@@ -27,6 +27,14 @@ class Admin(commands.Cog):
             embed.add_field(name=f"• {guild.id} - {guild.name}", value="", inline=False)
 
         await inter.edit_original_message(embed=embed)
+
+    @admin.sub_command(description="Clears all global application commands — bot restart required to re-register")
+    async def clear_global_commands(self, inter: disnake.ApplicationCommandInteraction) -> None:
+        await inter.response.defer(ephemeral=True)
+        await self.bot.bulk_overwrite_global_commands([])
+        await inter.edit_original_message(
+            "All global commands cleared. Restart the bot to re-register them from scratch."
+        )
 
 
 def setup(bot: commands.InteractionBot) -> None:
