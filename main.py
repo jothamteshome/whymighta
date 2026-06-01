@@ -58,16 +58,20 @@ async def on_ready() -> None:
 async def on_message(message: disnake.Message) -> None:
     if message.author.bot:
         return
-    if message.guild is not None:
-        if bot.user in message.mentions:
-            cog = bot.get_cog("Chatbot")
-            if cog:
-                await cog.chatting(message)
-        await xp.give_message_xp(database, bot, message, catching_up=False)
+    
+    in_dm = not message.guild
+
+    if in_dm or bot.user in message.mentions:
+        cog = bot.get_cog("Chatbot")
+        if cog:
+            await cog.chatting(message)
+    
+    await xp.give_message_xp(database, bot, message, catching_up=False)
+
+    if not in_dm:
         await message_modes.mock_user(database, message)
         await message_modes.binarize_message(database, message)
-    else:
-        await xp.give_message_xp(database, bot, message, catching_up=False)
+
 
 
 @bot.event
