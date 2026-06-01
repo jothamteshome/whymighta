@@ -44,6 +44,10 @@ class Misc(commands.Cog):
         state_code: str = commands.Param(default="", description="State or province code (e.g. CA)"),
         country_code: str = commands.Param(default="", description="ISO country code (e.g. US)"),
     ) -> None:
+        if not config.WEATHER_API_KEY:
+            await inter.response.send_message("Weather is not configured on this bot. Please contact the administrator to enable it.", ephemeral=True)
+            return
+
         await inter.response.defer()
 
         units = {"F": "imperial", "C": "metric", "K": "standard"}[units]

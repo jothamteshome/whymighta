@@ -48,6 +48,11 @@ async def on_ready() -> None:
     }
     logger.info("Logged in as %s", bot.user)
 
+    if not config.WEATHER_API_KEY:
+        logger.warning("WEATHER_API_KEY not set — /weather command disabled")
+    if not config.OPENAI_API_KEY and not config.ANTHROPIC_API_KEY:
+        logger.warning("No LLM API key set — AI chat disabled")
+
 
 @bot.event
 async def on_message(message: disnake.Message) -> None:
