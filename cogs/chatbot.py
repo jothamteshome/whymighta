@@ -16,6 +16,9 @@ logger = logging.getLogger(__name__)
 
 
 class Chatbot(commands.Cog):
+    category_display_name = "Chatbot"
+    category_emoji = "💬"
+
     def __init__(self, bot: commands.InteractionBot) -> None:
         self.bot: commands.InteractionBot = bot
         self.database: Database = bot.db
@@ -82,7 +85,10 @@ class Chatbot(commands.Cog):
         await message.channel.send(response_text)
 
 
-    @commands.slash_command()
+    @commands.slash_command(
+            description="Private thread chat session commands", 
+            contexts=disnake.InteractionContextTypes(guild=True)
+        )
     async def chat(self, inter: disnake.ApplicationCommandInteraction) -> None:
         pass
 
@@ -141,7 +147,7 @@ class Chatbot(commands.Cog):
         author_thread_id = await self.database.get_thread_id(inter.guild.id, inter.author.id)
 
         if not author_thread_id:
-            await inter.edit_original_response(f"No thead exists for {inter.author.name} in guild {inter.guild.name}.")
+            await inter.edit_original_response(f"No thread exists for {inter.author.name} in guild {inter.guild.name}.")
             return
 
         # Delete user's thread

@@ -1,8 +1,4 @@
-import asyncio
-import io
-
-import aiohttp
-import disnake
+import aiohttp, asyncio, disnake, io
 from PIL import Image
 
 

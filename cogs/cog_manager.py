@@ -1,8 +1,10 @@
 import logging
 import os
 
+import disnake
 from disnake import ApplicationCommandInteraction, Embed
 from disnake.ext import commands
+from utils.constants import DEFAULT_EMBED_COLOR
 
 logger = logging.getLogger(__name__)
 
@@ -11,7 +13,7 @@ class CogManager(commands.Cog):
     def __init__(self, bot: commands.InteractionBot) -> None:
         self.bot: commands.InteractionBot = bot
 
-    @commands.slash_command(description="Manage cogs (bot owner only)")
+    @commands.slash_command(description="Manage cogs (bot owner only)", contexts=disnake.InteractionContextTypes(guild=True))
     @commands.is_owner()
     async def cog(self, inter: ApplicationCommandInteraction):
         pass
@@ -21,7 +23,7 @@ class CogManager(commands.Cog):
         await inter.response.defer(ephemeral=True)
         embed = Embed()
 
-        embed = Embed(title="Available Cogs", description=f"\n{'-' * 25}", color=0x9534eb)          
+        embed = Embed(title="Available Cogs", description=f"\n{'-' * 25}", color=DEFAULT_EMBED_COLOR)          
 
         for filename in os.listdir("./cogs"):
             if filename.endswith(".py"):

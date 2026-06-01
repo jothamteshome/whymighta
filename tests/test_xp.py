@@ -6,15 +6,15 @@ import pytest
 from utils import xp
 
 
-def test_check_level_zero():
-    assert xp.check_level(0) == 0.0
+def test_check_level_one():
+    assert xp.check_level(0) == 1.0
 
 
 def test_check_level_known_values():
-    # 32 ** (1/5) == 2.0
-    assert xp.check_level(32) == pytest.approx(2.0)
+    # 32 ** (1/5) + 1 == 3.0
+    assert xp.check_level(32) == pytest.approx(3.0)
     # 243 ** (1/5) == 3.0
-    assert xp.check_level(243) == pytest.approx(3.0)
+    assert xp.check_level(243) == pytest.approx(4.0)
 
 
 def test_check_level_returns_float():
@@ -26,7 +26,7 @@ def test_check_level_returns_float():
 # ---------------------------------------------------------------------------
 
 async def test_announce_level_up_fires_on_new_level():
-    """prev=0 -> curr=32 crosses level boundary (floor(0^(1/5))=0, floor(32^(1/5))=2)."""
+    """prev=0 -> curr=32 crosses level boundary (floor(0^(1/5) + 1)=1, floor(32^(1/5) + 1)=3)."""
     db = AsyncMock()
     bot = MagicMock()
     channel = AsyncMock()
@@ -41,11 +41,11 @@ async def test_announce_level_up_fires_on_new_level():
     await xp.announce_level_up(db, bot, previous_xp=0, current_xp=32, user=user, channel=channel)
 
     channel.send.assert_awaited_once()
-    assert "Level 2" in channel.send.call_args[0][0]
+    assert "Level 3" in channel.send.call_args[0][0]
 
 
 async def test_announce_level_up_silent_when_no_new_level():
-    """prev=1 -> curr=2 does not cross a level boundary."""
+    """prev=1 -> curr=2 does not cross a level boundary (floor(1^(1/5) + 1)=1, floor(2^(1/5) + 1)=1)."""
     db = AsyncMock()
     bot = MagicMock()
     channel = AsyncMock()
@@ -94,13 +94,12 @@ async def test_give_message_xp_updates_score():
     message.channel = AsyncMock()
     message.channel.guild.id = 2
 
-    db.current_user_score.return_value = 10
+    db.current_guild_score.return_value = 10
 
     await xp.give_message_xp(db, bot, message, catching_up=True)
 
-    # score = 10 (prev) + 0 (mentions) + 0 (attachments) + 5 (content) = 15
-    db.update_user_score.assert_awaited_once_with(1, 2, 15)
-    db.update_last_message_sent.assert_awaited_once()
+    # delta = 0 (mentions) + 0 (attachments) + 5 (content) = 5
+    db.award_guild_xp.assert_awaited_once_with(1, 2, 5, message.created_at)
 
 
 async def test_give_message_xp_no_level_announce_when_catching_up():
@@ -116,7 +115,7 @@ async def test_give_message_xp_no_level_announce_when_catching_up():
     message.content = "a" * 1000  # big enough to trigger level-up math
     message.channel = AsyncMock()
 
-    db.current_user_score.return_value = 0
+    db.current_guild_score.return_value = 0
     # bot.get_channel should NOT be called
     bot.get_channel = MagicMock()
 
@@ -138,9 +137,10 @@ async def test_give_message_xp_counts_mentions_and_attachments():
     message.channel = AsyncMock()
     message.channel.guild.id = 6
 
-    db.current_user_score.return_value = 0
+    db.current_guild_score.return_value = 0
     db.get_bot_text_channel_id.return_value = None
 
     await xp.give_message_xp(db, bot, message, catching_up=True)
 
-    db.update_user_score.assert_awaited_once_with(5, 6, 22)
+    # delta = 2*5 (mentions) + 1*10 (attachment) + 2 (content) = 22
+    db.award_guild_xp.assert_awaited_once_with(5, 6, 22, message.created_at)

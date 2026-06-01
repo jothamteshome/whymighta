@@ -1,14 +1,9 @@
-import asyncio
-import logging
-import random
-from typing import Optional
-
-import aiohttp
-import disnake
-
+import aiohttp, asyncio, disnake, logging, random
 from database.manager import Database
 from models.theme import GuildTheme
-from utils.image_utils import fetch_image_bytes
+from typing import Optional
+from utils import image as utils_image
+
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +75,7 @@ async def apply_guild_appearance(guild: disnake.Guild, theme: GuildTheme) -> lis
 
     if theme.icon_url:
         try:
-            icon_bytes = await fetch_image_bytes(theme.icon_url)
+            icon_bytes = await utils_image.fetch_image_bytes(theme.icon_url)
             await guild.edit(icon=icon_bytes)
             feedback.append("Server icon updated.")
         except aiohttp.ClientError as e:

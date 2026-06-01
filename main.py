@@ -10,13 +10,16 @@ from core.config import config
 from database.client import AsyncDatabaseClient
 from database.manager import Database
 from models.theme import GuildTheme
-from utils import message_modes, startup, xp
-from utils.logging_config import configure_logger
+from utils import message_modes, startup, logs as utils_logs, xp
 
-configure_logger()
+utils_logs.configure_logger()
 logger = logging.getLogger(__name__)
 
-bot = commands.InteractionBot(intents=disnake.Intents.all())
+bot = commands.InteractionBot(
+    intents=disnake.Intents.all(),
+    default_install_types=disnake.ApplicationInstallTypes(guild=True),
+    command_sync_flags=commands.CommandSyncFlags.all(),
+)
 
 _client = AsyncDatabaseClient(
     host=config.DB_HOST,
@@ -33,14 +36,24 @@ bot.db = database
 async def on_ready() -> None:
     await startup.update_new_members(bot, database)
     await startup.server_message_catchup(bot, database)
+
+    cmds = await bot.fetch_global_commands()
+    logger.info("Global commands registered with Discord: %d", len(cmds))
+    cmds = await startup.force_global_command_sync(bot, cmds)
+
+    bot.slash_command_ids = {
+        c.name: c.id
+        for c in cmds
+        if c.type == disnake.ApplicationCommandType.chat_input
+    }
     logger.info("Logged in as %s", bot.user)
 
 
 @bot.event
 async def on_message(message: disnake.Message) -> None:
-    if message.guild is None:
+    if message.author.bot:
         return
-    if message.author.bot is not True:
+    if message.guild is not None:
         if bot.user in message.mentions:
             cog = bot.get_cog("Chatbot")
             if cog:
@@ -48,6 +61,8 @@ async def on_message(message: disnake.Message) -> None:
         await xp.give_message_xp(database, bot, message, catching_up=False)
         await message_modes.mock_user(database, message)
         await message_modes.binarize_message(database, message)
+    else:
+        await xp.give_message_xp(database, bot, message, catching_up=False)
 
 
 @bot.event
@@ -61,8 +76,8 @@ async def on_guild_join(guild: disnake.Guild) -> None:
 
 @bot.event
 async def on_guild_remove(guild: disnake.Guild) -> None:
-    await database.remove_guild(guild.id)
-    logger.info("Removed from guild %d (%s)", guild.id, guild.name)
+    await database.deactivate_guild(guild.id)
+    logger.info("Deactivated guild %d (%s)", guild.id, guild.name)
 
 
 @bot.event
@@ -119,8 +134,8 @@ async def on_member_join(member: disnake.Member) -> None:
 
 @bot.event
 async def on_member_remove(member: disnake.Member) -> None:
-    await database.remove_user(member.id, member.guild.id)
-    logger.info("Member left: user=%d guild=%d", member.id, member.guild.id)
+    await database.deactivate_member(member.id, member.guild.id)
+    logger.info("Member deactivated: user=%d guild=%d", member.id, member.guild.id)
 
 
 @bot.event
@@ -156,6 +171,7 @@ for filename in os.listdir("./cogs"):
 
 async def main() -> None:
     await database.init_pool()
+    await database.migrate_v2()
     await database.create_tables()
     try:
         await bot.start(config.DISCORD_TOKEN)

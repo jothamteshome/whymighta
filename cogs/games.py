@@ -1,21 +1,25 @@
-import logging
-import random
-
-import disnake
+import disnake, logging, random
 from disnake import Embed
 from disnake.ext import commands
-
 from database.manager import Database
+from utils import fortnite as utils_fortnite
+from utils.constants import DEFAULT_EMBED_COLOR
 
 logger = logging.getLogger(__name__)
 
 
 class Games(commands.Cog):
+    category_display_name = "Games"
+    category_emoji = "🎮"
+
     def __init__(self, bot: commands.InteractionBot) -> None:
         self.bot: commands.InteractionBot = bot
         self.database: Database = bot.db
 
-    @commands.slash_command()
+    @commands.slash_command(
+            description="Game list and selection commands", 
+            contexts=disnake.InteractionContextTypes(guild=True)
+        )
     async def games(self, inter: disnake.ApplicationCommandInteraction) -> None:
         pass
 
@@ -23,7 +27,7 @@ class Games(commands.Cog):
     async def list(self, inter: disnake.ApplicationCommandInteraction) -> None:
         await inter.response.defer()
 
-        embed = Embed(title="Games List", description=f"\n{'-' * 25}", color=0x9534eb)
+        embed = Embed(title="Games List", description=f"\n{'-' * 25}", color=DEFAULT_EMBED_COLOR)
         games_list = await self.database.get_all_games_from_list(inter.guild.id)
 
         for game in games_list:
@@ -32,7 +36,11 @@ class Games(commands.Cog):
         await inter.edit_original_message(embed=embed)
 
     @games.sub_command(description="Add game to the games list")
-    async def add(self, inter: disnake.ApplicationCommandInteraction, name: str) -> None:
+    async def add(
+        self, 
+        inter: disnake.ApplicationCommandInteraction, 
+        name: str = commands.Param(description="Game to add to the list")
+    ) -> None:
         await inter.response.defer()
 
         game = await self.database.get_game_from_list(inter.guild.id, name)
@@ -44,7 +52,11 @@ class Games(commands.Cog):
             await inter.edit_original_message(f"{name} added to games list")
 
     @games.sub_command(description="Remove game from the games list")
-    async def remove(self, inter: disnake.ApplicationCommandInteraction, name: str) -> None:
+    async def remove(
+        self, 
+        inter: disnake.ApplicationCommandInteraction, 
+        name: str = commands.Param(description="Game to remove from the list")
+    ) -> None:
         await inter.response.defer()
 
         game = await self.database.get_game_from_list(inter.guild.id, name)
@@ -68,6 +80,16 @@ class Games(commands.Cog):
         else:
             random_game = random.choice(games)["game_name"]
             await inter.edit_original_message(f"You should play {random_game}!")
+
+    @commands.slash_command(description="Fortnite utilities")
+    async def fortnite(self, inter: disnake.ApplicationCommandInteraction) -> None:
+        pass
+
+    @fortnite.sub_command(description="Select a random drop location in Fortnite")
+    async def drop(self, inter: disnake.ApplicationCommandInteraction) -> None:
+        await inter.response.defer()
+        named_drops = await utils_fortnite.fetch_named_locations()
+        await inter.edit_original_message(f"You should drop at {utils_fortnite.select_location(named_drops)}!")
 
 
 def setup(bot: commands.InteractionBot) -> None:

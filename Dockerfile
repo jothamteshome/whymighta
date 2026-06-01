@@ -10,8 +10,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
+COPY pyproject.toml .
+RUN pip install --no-cache-dir --prefix=/install .
 
 
 FROM python:3.13-slim-bookworm

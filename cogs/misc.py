@@ -1,35 +1,52 @@
-import logging
-
-import disnake
+import disnake, logging
 from aiohttp import ClientSession
 from core.config import config
 from disnake.ext import commands
+from utils import image as utils_image
 
 logger = logging.getLogger(__name__)
 
 
-class Weather(commands.Cog):
+class Misc(commands.Cog):
+    category_display_name = "Misc"
+    category_emoji = "🎲"
+
     def __init__(self, bot: commands.InteractionBot) -> None:
         self.bot: commands.InteractionBot = bot
+
+    @commands.slash_command(
+        description="Puts a deserving criminal behind bars",
+        contexts=disnake.InteractionContextTypes(guild=True),
+    )
+    async def jail(self, inter: disnake.ApplicationCommandInteraction, name: str = commands.Param(description="Discord username or nickname")) -> None:
+        members = {member.name: member for member in inter.guild.members}
+        nicknames = {member.nick: member for member in inter.guild.members if member.nick}
+
+        member = members.get(name) or nicknames.get(name)
+
+        if member is None:
+            await inter.response.send_message(
+                "User does not exist. Please try again with the user's discord name"
+            )
+            return
+
+        await inter.response.send_message("Generating Image...")
+        jailed_image = await utils_image.imprison_member(member)
+        await inter.edit_original_response(content="", file=jailed_image)
+
 
     @commands.slash_command(description="Check the weather in a specific city")
     async def weather(
         self,
         inter: disnake.ApplicationCommandInteraction,
-        units: str,
-        city: str,
-        state_code: str = "",
-        country_code: str = "",
+        units: str = commands.Param(choices=["F", "C", "K"], description="Temperature unit"),
+        city: str = commands.Param(description="City name"),
+        state_code: str = commands.Param(default="", description="State or province code (e.g. CA)"),
+        country_code: str = commands.Param(default="", description="ISO country code (e.g. US)"),
     ) -> None:
-        valid_units = {"F": "imperial", "C": "metric", "K": "standard"}
+        await inter.response.defer()
 
-        if units.upper() not in valid_units:
-            await inter.response.send_message(
-                "Invalid unit type. Valid unit types are standard, metric, or imperial."
-            )
-            return
-
-        units = valid_units[units.upper()]
+        units = {"F": "imperial", "C": "metric", "K": "standard"}[units]
         weather_api = config.WEATHER_API_KEY
 
         temp_identifiers = {"imperial": "\u00B0F", "metric": "\u00B0C", "standard": "K"}
@@ -62,7 +79,7 @@ class Weather(commands.Cog):
                 city = loc_data[0]["name"] + ","
                 country_code = loc_data[0]["country"]
             except IndexError:
-                await inter.response.send_message("Location not available. Please try again")
+                await inter.edit_original_message("Location not available. Please try again")
                 return
 
             try:
@@ -89,12 +106,12 @@ class Weather(commands.Cog):
                     low_temp = weather_data["main"]["temp_min"]
                     current_condition = weather_conditions[weather_data["weather"][0]["main"].lower()]
                 except KeyError:
-                    await inter.response.send_message(
+                    await inter.edit_original_message(
                         "Invalid entry. Please check spelling and try again."
                     )
                     return
 
-        await inter.response.send_message(
+        await inter.edit_original_message(
             "The temperature in {city} {state} {country} right now is {current:.2f}{temp_id}, "
             "with a high of {high:.2f}{temp_id} and a low of {low:.2f}{temp_id}. "
             "{condition}".format(
@@ -111,4 +128,4 @@ class Weather(commands.Cog):
 
 
 def setup(bot: commands.InteractionBot) -> None:
-    bot.add_cog(Weather(bot))
+    bot.add_cog(Misc(bot))

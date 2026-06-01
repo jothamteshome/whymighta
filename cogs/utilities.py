@@ -2,17 +2,22 @@ import logging
 import math
 import time
 
+import disnake
 from disnake import ApplicationCommandInteraction, Embed
 from disnake.ext import commands
 
 from database.manager import Database
 from utils import xp
-from utils.image_utils import imprison_member
+from views.leaderboard import LeaderboardView
+from utils.constants import DEFAULT_EMBED_COLOR
 
 logger = logging.getLogger(__name__)
 
 
 class Utilities(commands.Cog):
+    category_display_name = "Utilities"
+    category_emoji = "🛠️"
+
     def __init__(self, bot: commands.InteractionBot) -> None:
         self.bot: commands.InteractionBot = bot
         self.database: Database = bot.db
@@ -20,50 +25,72 @@ class Utilities(commands.Cog):
     @commands.slash_command(description="Check the latency of the bot")
     async def ping(self, inter: ApplicationCommandInteraction) -> None:
         before = time.monotonic()
-        embed = Embed(title=":information_source: | Pong!", description="\n", color=0x9534eb)
+        embed = Embed(title=":information_source: | Pong!", description="\n", color=DEFAULT_EMBED_COLOR)
         await inter.response.send_message(embed=embed)
         latency = (time.monotonic() - before) * 1000
         embed.add_field(name="Latency", value=str(int(latency)) + "ms", inline=False)
         embed.add_field(name="API", value=str(int(self.bot.latency * 1000)) + "ms", inline=False)
         await inter.edit_original_response(embed=embed)
 
-    @commands.slash_command(description="Checks the level of a user")
+    @commands.slash_command(description="Check your level and XP progress")
     async def level(self, inter: ApplicationCommandInteraction) -> None:
         await inter.response.defer()
 
-        curr_xp = await self.database.current_user_score(inter.author.id, inter.guild_id)
-        curr_level = xp.check_level(curr_xp)
+        global_xp = await self.database.current_global_score(inter.author.id)
+        global_level_floor = math.floor(xp.check_level(global_xp))
+        global_progress = int(round(xp.check_level(global_xp) - global_level_floor, 2) * 100)
+        global_bar = math.floor(global_progress / 10)
 
-        curr_level_floor = math.floor(curr_level)
-        next_level_progress = int(round(curr_level - curr_level_floor, 2) * 100)
-        progress_bar = math.floor(next_level_progress / 10)
-
-        embed = Embed(title=f"{inter.author.name}'s Level Progress", description="\n", color=0x9534eb)
+        embed = Embed(title=f"{inter.author.name}'s Level Progress", description="\n", color=DEFAULT_EMBED_COLOR)
         embed.add_field(
-            name=f"{next_level_progress}% to Level {curr_level_floor + 1}",
-            value=(progress_bar * "🔵") + ((10 - progress_bar) * "⚪"),
+            name=f"Global — {global_progress}% to Level {global_level_floor + 1}",
+            value=(global_bar * "🔵") + ((10 - global_bar) * "⚪"),
             inline=False,
         )
 
+        if inter.guild_id is not None:
+            guild_xp = await self.database.current_guild_score(inter.author.id, inter.guild_id)
+            guild_level_floor = math.floor(xp.check_level(guild_xp))
+            guild_progress = int(round(xp.check_level(guild_xp) - guild_level_floor, 2) * 100)
+            guild_bar = math.floor(guild_progress / 10)
+            embed.add_field(
+                name=f"Server — {guild_progress}% to Level {guild_level_floor + 1}",
+                value=(guild_bar * "🔵") + ((10 - guild_bar) * "⚪"),
+                inline=False,
+            )
+
         await inter.edit_original_message(embed=embed)
 
-    @commands.slash_command(description="Puts a deserving criminal behind bars")
-    async def jail(self, inter: ApplicationCommandInteraction, name: str) -> None:
-        members = {member.name: member for member in inter.guild.members}
-        nicknames = {member.nick: member for member in inter.guild.members if member.nick}
+    @commands.slash_command(description="View the server XP leaderboard", contexts=disnake.InteractionContextTypes(guild=True))
+    async def leaderboard(self, inter: ApplicationCommandInteraction) -> None:
+        await inter.response.defer()
 
-        member = members.get(name) or nicknames.get(name)
+        rows = await self.database.get_leaderboard(inter.guild_id)
 
-        if member is None:
-            await inter.response.send_message(
-                "User does not exist. Please try again with the user's discord name"
-            )
+        if not rows:
+            embed = Embed(title="Leaderboard", description="No XP data yet.", color=DEFAULT_EMBED_COLOR)
+            await inter.edit_original_message(embed=embed)
             return
 
-        await inter.response.send_message("Generating Image...")
-        jailed_image = await imprison_member(member)
-        await inter.edit_original_response(content="", file=jailed_image)
+        names: dict[int, str] = {}
+        for row in rows:
+            uid = row["user_id"]
+            member = inter.guild.get_member(uid)
+            if member:
+                names[uid] = member.name
+            else:
+                try:
+                    user = await self.bot.fetch_user(uid)
+                    names[uid] = user.name
+                except (disnake.NotFound, disnake.HTTPException):
+                    names[uid] = str(uid)
 
+        view = LeaderboardView(rows, inter.guild.name, names)
+        await inter.edit_original_message(
+            content=f"Page 1 of {view.total_pages}",
+            embed=view.get_embed(),
+            view=view,
+        )
 
 def setup(bot: commands.InteractionBot) -> None:
     bot.add_cog(Utilities(bot))
