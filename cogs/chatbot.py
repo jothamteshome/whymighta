@@ -63,14 +63,20 @@ class Chatbot(commands.Cog):
                 self._llm_client = get_llm_client()
             except RuntimeError:
                 return
-
-        raw_theme = await self.database.get_theme(message.guild.id)
-        theme = GuildTheme.model_validate(raw_theme) if raw_theme else None
-
-        bot_member = message.guild.me
-        bot_nick = bot_member.nick
+            
+        theme = None
+        bot_member = self.bot.user
+        bot_nick = bot_member.name
         bot_username = bot_member.name
-        bot_mention = self.bot.user.mention
+        bot_mention = bot_member.mention
+
+        if message.guild:
+            raw_theme = await self.database.get_theme(message.guild.id)
+            theme = GuildTheme.model_validate(raw_theme) if raw_theme else None
+
+            bot_member = message.guild.me
+            bot_nick = bot_member.nick
+            bot_username = bot_member.name
 
         system = build_system_prompt(theme, bot_nick, bot_username, bot_mention)
 
@@ -79,7 +85,7 @@ class Chatbot(commands.Cog):
         try:
             response_text = await self._llm_client.complete(system, chat_messages)
         except Exception as e:
-            logger.error("LLM call failed for guild %d: %s", message.guild.id, e)
+            logger.error("LLM call failed for guild %s: %s", message.guild.id if message.guild else "DM", e)
             await message.channel.send(
                 "Could not process request. Please try again or contact an administrator."
             )
