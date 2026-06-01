@@ -17,7 +17,7 @@ class Config(BaseSettings):
     OPENAI_MODEL: str = "gpt-4.1-mini"
     ANTHROPIC_MODEL: str = "claude-haiku-4-5"
 
-    WEATHER_API_KEY: str
+    WEATHER_API_KEY: Optional[str] = None
 
     DISCORD_TOKEN: str
 

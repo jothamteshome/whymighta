@@ -22,7 +22,7 @@ class Chatbot(commands.Cog):
     def __init__(self, bot: commands.InteractionBot) -> None:
         self.bot: commands.InteractionBot = bot
         self.database: Database = bot.db
-        self.llm_client = get_llm_client()
+        self._llm_client = None
 
 
 
@@ -58,6 +58,12 @@ class Chatbot(commands.Cog):
 
 
     async def chatting(self, message: disnake.Message) -> None:
+        if self._llm_client is None:
+            try:
+                self._llm_client = get_llm_client()
+            except RuntimeError:
+                return
+
         raw_theme = await self.database.get_theme(message.guild.id)
         theme = GuildTheme.model_validate(raw_theme) if raw_theme else None
 
@@ -71,7 +77,7 @@ class Chatbot(commands.Cog):
         chat_messages, users = await self.get_last_messages(message.channel)
 
         try:
-            response_text = await self.llm_client.complete(system, chat_messages)
+            response_text = await self._llm_client.complete(system, chat_messages)
         except Exception as e:
             logger.error("LLM call failed for guild %d: %s", message.guild.id, e)
             await message.channel.send(
