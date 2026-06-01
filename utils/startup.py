@@ -1,14 +1,25 @@
-import logging
+import disnake, logging
 from datetime import datetime, timezone
-
-import disnake
 from disnake.ext import commands
-
 from database.manager import Database
 from utils import xp
 
 logger = logging.getLogger(__name__)
 
+async def force_global_command_sync(bot: commands.InteractionBot, cmds: list[disnake.ApplicationCommand]) -> list[disnake.ApplicationCommand]:
+    if cmds:
+        return cmds
+    
+    global_cmds, _ = bot._ordered_unsynced_commands(None)
+    logger.warning("Discord has 0 global commands; forcing sync of %d local commands", len(global_cmds))
+    try:
+        await bot.bulk_overwrite_global_commands(global_cmds)
+        logger.info("Force sync complete")
+        cmds = await bot.fetch_global_commands()
+    except Exception as e:
+        logger.error("Force sync failed: %s", e)
+
+    return cmds
 
 async def update_new_members(bot: commands.InteractionBot, db: Database) -> None:
     for guild in bot.guilds:

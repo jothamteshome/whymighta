@@ -39,16 +39,7 @@ async def on_ready() -> None:
 
     cmds = await bot.fetch_global_commands()
     logger.info("Global commands registered with Discord: %d", len(cmds))
-
-    if not cmds:
-        global_cmds, _ = bot._ordered_unsynced_commands(None)
-        logger.warning("Discord has 0 global commands; forcing sync of %d local commands", len(global_cmds))
-        try:
-            await bot.bulk_overwrite_global_commands(global_cmds)
-            logger.info("Force sync complete")
-            cmds = await bot.fetch_global_commands()
-        except Exception as e:
-            logger.error("Force sync failed: %s", e)
+    cmds = await startup.force_global_command_sync(bot, cmds)
 
     bot.slash_command_ids = {
         c.name: c.id
