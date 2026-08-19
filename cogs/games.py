@@ -1,8 +1,11 @@
 import disnake, logging, random
+from aiohttp import ClientResponseError
+from core.config import config
 from disnake import Embed
 from disnake.ext import commands
 from database.manager import Database
 from utils import fortnite as utils_fortnite
+from utils import minecraft as utils_minecraft
 from utils.constants import DEFAULT_EMBED_COLOR
 
 logger = logging.getLogger(__name__)
@@ -90,6 +93,83 @@ class Games(commands.Cog):
         await inter.response.defer()
         named_drops = await utils_fortnite.fetch_named_locations()
         await inter.edit_original_message(f"You should drop at {utils_fortnite.select_location(named_drops)}!")
+
+    @commands.slash_command(description="Minecraft utilities")
+    async def minecraft(self, inter: disnake.ApplicationCommandInteraction) -> None:
+        pass
+
+    @minecraft.sub_command(description="Check status of the Minecraft servers")
+    async def status(self, inter: disnake.ApplicationCommandInteraction) -> None:
+        if not config.MINECRAFT_API_TOKEN or not config.MINECRAFT_API_URL:
+            await inter.response.send_message("Minecraft controls are not configured on this bot.", ephemeral=True)
+            return
+
+        await inter.response.defer()
+
+        try:
+            statuses = await utils_minecraft.get_status()
+        except ClientResponseError:
+            await inter.edit_original_message("Could not reach the Minecraft API. Please try again later.")
+            return
+
+        embed = Embed(title="Minecraft Server Status", color=DEFAULT_EMBED_COLOR)
+        for name, info in statuses.items():
+            embed.add_field(
+                name=name.title(),
+                value=f"{utils_minecraft.format_state(info['state'])}\n{info['hostname']}",
+                inline=True,
+            )
+
+        await inter.edit_original_message(embed=embed)
+
+
+    @minecraft.sub_command(description="Start a Minecraft server")
+    async def start(
+        self, inter: disnake.ApplicationCommandInteraction,
+        server: str = commands.Param(choices=["vanilla", "modded", "datapack"]),
+    ) -> None:
+        if not config.MINECRAFT_API_TOKEN or not config.MINECRAFT_API_URL:
+            await inter.response.send_message("Minecraft controls are not configured on this bot.", ephemeral=True)
+            return
+
+        await inter.response.defer()
+
+        try:
+            result = await utils_minecraft.start_server(server)
+        except ClientResponseError:
+            await inter.edit_original_message("Could not reach the Minecraft API. Please try again later.")
+            return
+
+        await inter.edit_original_message(
+            f"**{result['hostname']}** is starting up. Server should be available within the next 60 seconds."
+        )
+
+
+    @minecraft.sub_command(description="Stop a Minecraft server (owner only)")
+    async def stop(
+        self, inter: disnake.ApplicationCommandInteraction,
+        server: str = commands.Param(choices=["vanilla", "modded", "datapack"]),
+    ) -> None:
+        if not await self.bot.is_owner(inter.author):
+            await inter.response.send_message("Only the bot owner can stop the Minecraft server.", ephemeral=True)
+            return
+
+        if not config.MINECRAFT_API_TOKEN or not config.MINECRAFT_API_URL:
+            await inter.response.send_message("Minecraft controls are not configured on this bot.", ephemeral=True)
+            return
+
+        await inter.response.defer()
+
+        try:
+            result = await utils_minecraft.stop_server(server)
+        except ClientResponseError:
+            await inter.edit_original_message("Could not reach the Minecraft API. Please try again later.")
+            return
+
+        await inter.edit_original_message(
+            f"**{result['hostname']}** is shutting down."
+        )
+
 
 
 def setup(bot: commands.InteractionBot) -> None:

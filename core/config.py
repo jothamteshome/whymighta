@@ -21,4 +21,7 @@ class Config(BaseSettings):
 
     DISCORD_TOKEN: str
 
+    MINECRAFT_API_TOKEN: Optional[str] = None
+    MINECRAFT_API_URL: Optional[str] = None
+
 config = Config()
