@@ -54,7 +54,8 @@ jobs:
         aws ssm put-parameter --name "/whymighta/llm/anthropic/model" --value "${{ vars.ANTHROPIC_MODEL }}" --type "String" --overwrite
         aws ssm put-parameter --name "/whymighta/api/weather/key" --value "${{ secrets.WEATHER_API_KEY }}" --type "SecureString" --overwrite
         aws ssm put-parameter --name "/whymighta/discord/token" --value "${{ secrets.DISCORD_TOKEN }}" --type "SecureString" --overwrite
-
+        aws ssm put-parameter --name "/whymighta/api/minecraft/url" --value "${{ vars.MINECRAFT_API_URL }}" --type "String" --overwrite
+        
     - name: Log in to GHCR
       uses: docker/login-action@v4
       with:

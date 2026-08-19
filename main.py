@@ -50,6 +50,8 @@ async def on_ready() -> None:
 
     if not config.WEATHER_API_KEY:
         logger.warning("WEATHER_API_KEY not set — /weather command disabled")
+    if not config.MINECRAFT_API_TOKEN or not config.MINECRAFT_API_URL:
+        logger.warning("MINECRAFT_API_TOKEN/URL not set — /minecraft command disabled")
     if not config.OPENAI_API_KEY and not config.ANTHROPIC_API_KEY:
         logger.warning("No LLM API key set — AI chat disabled")
 
