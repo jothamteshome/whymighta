@@ -109,6 +109,7 @@ class Games(commands.Cog):
         try:
             statuses = await utils_minecraft.get_status()
         except ClientResponseError:
+            logger.exception("Minecraft API call failed")
             await inter.edit_original_message("Could not reach the Minecraft API. Please try again later.")
             return
 
@@ -137,6 +138,7 @@ class Games(commands.Cog):
         try:
             result = await utils_minecraft.start_server(server)
         except ClientResponseError:
+            logger.exception("Minecraft API call failed")
             await inter.edit_original_message("Could not reach the Minecraft API. Please try again later.")
             return
 
@@ -163,6 +165,7 @@ class Games(commands.Cog):
         try:
             result = await utils_minecraft.stop_server(server)
         except ClientResponseError:
+            logger.exception("Minecraft API call failed")
             await inter.edit_original_message("Could not reach the Minecraft API. Please try again later.")
             return
 
